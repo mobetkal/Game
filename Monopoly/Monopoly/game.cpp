@@ -2,12 +2,16 @@
 #include <SFML/Graphics.hpp>
 #include "game.h"
 #include <fstream>
+#include <Windows.h>
+#include <vector>
+
+using namespace std;
 
 using namespace sf;
 
-Game::Game(void) :monopoly_game(VideoMode(1100, 700, 32), "", Style::None)
+Game::Game(void) :window(VideoMode(1100, 700, 32), "", Style::None)
 {
-	state = END;
+	state = GameState::END;
 
 	if ((!bg_monopoly_logo.loadFromFile("graphics/bg_monopoly_logo.png")))
 		return;
@@ -21,7 +25,7 @@ Game::Game(void) :monopoly_game(VideoMode(1100, 700, 32), "", Style::None)
 	if ((!font.loadFromFile("font/font.ttf")) || (!font_menus.loadFromFile("font/kawoszeh.ttf")))
 		return;
 
-	state = MODE_MENU;
+	state = GameState::MODE_MENU;
 }
 
 void Game::setGameMode(bool result)
@@ -46,16 +50,16 @@ int Game::getPlayers()
 
 void Game::rungame()
 {
-	while (state != END)
+	while (state != GameState::END)
 	{
 		switch (state)
 		{
-		case 0:
+		case GameState::MODE_MENU:
 		{
 				  mode_menu();
 				  break;
 		}
-		case 1:
+		case GameState::MAIN_MENU:
 		{
 				  main_menu();
 				  break;
@@ -74,8 +78,8 @@ void Game::rungame()
 void Game::mode_menu()
 {
 
-	monopoly_game.setPosition(Vector2i(100, 10));
-	monopoly_game.setKeyRepeatEnabled(false);
+	window.setPosition(Vector2i(100, 10));
+	window.setKeyRepeatEnabled(false);
 	bg.setTexture(bg_monopoly_logo);
 
 	Text title(L"Wybierz tryb gry:", font_menus, 65);
@@ -91,15 +95,25 @@ void Game::mode_menu()
 	Text close_game(L"Wyjdź z gry", font_menus, 45);
 	close_game.setPosition((1100 / 2 - close_game.getGlobalBounds().width / 2), 540);
 
-	while (state == MODE_MENU)
+
+	
+	while (state == GameState::MODE_MENU)
 	{
-		Vector2f mouse(Mouse::getPosition(monopoly_game));
+		window.clear();
+		window.draw(bg);
+		window.draw(title);
+		window.draw(online);
+		window.draw(offline);
+		window.draw(close_game);
+		window.display();
+
+		Vector2f mouse(Mouse::getPosition(window));
 		Event event;
-		while (monopoly_game.pollEvent(event))
+		while (window.pollEvent(event))
 		{
 			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
 			{
-				state = END;
+				state = GameState::END;
 				break;
 			}
 
@@ -110,7 +124,7 @@ void Game::mode_menu()
 				close_game.setColor(Color(197, 0, 8, 255));
 				if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 				{
-					state = END;
+					state = GameState::END;
 					break;
 				}
 			}
@@ -128,7 +142,7 @@ void Game::mode_menu()
 				if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 				{
 					setGameMode(true);
-					state = MAIN_MENU;
+					state = GameState::MAIN_MENU;
 					break;
 				}
 			}
@@ -146,7 +160,7 @@ void Game::mode_menu()
 				if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 				{
 					setGameMode(false);
-					state = MAIN_MENU;
+					state = GameState::MAIN_MENU;
 					break;
 				}
 			}
@@ -157,144 +171,87 @@ void Game::mode_menu()
 			}
 
 		}
-		monopoly_game.clear();
-		monopoly_game.draw(bg);
-		monopoly_game.draw(title);
-		monopoly_game.draw(online);
-		monopoly_game.draw(offline);
-		monopoly_game.draw(close_game);
-		monopoly_game.display();
+		
 	}
 }
 
+
+/*
+Istotnych zmian dokonałem tylko w tej metodzie
+*/
 void Game::main_menu()
 {
-	monopoly_game.setPosition(Vector2i(100, 10));
-	monopoly_game.setKeyRepeatEnabled(false);
+	window.setPosition(Vector2i(100, 10));
+	window.setKeyRepeatEnabled(false);
 	bg.setTexture(bg_monopoly_logo);
 
-	Text continue_game(L"Kontynuuj grę", font_menus, 45);
-	continue_game.setPosition((1100 / 2 - continue_game.getGlobalBounds().width / 2), 350);
-	
-	Text new_game(L"Nowa gra", font_menus, 45);
-	new_game.setPosition((1100 / 2 - new_game.getGlobalBounds().width / 2), 400);
 
-	Text back(L"Powrót", font_menus, 45);
-	back.setPosition((1100 / 2 - back.getGlobalBounds().width / 2), 450);
+	//Przechowuję wszystkie przyciski w wektorze zamiast po prostu dla uproszczenia
+	vector<MenuButton> buttons;
+	buttons.emplace_back(L"Kontynuuj grę", font_menus, 45, 350, GameState::END, !getGameMode()); //ma Pan tam zakomentowany stan CONTINUE, a musze jakis ustawic
+	buttons.emplace_back(L"Nowa gra", font_menus, 45, 400, GameState::NEW_GAME);
+	buttons.emplace_back(L"Powrót", font_menus, 45, 450, GameState::MODE_MENU);
+	buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 500, GameState::END);
 
-	Text close_game(L"Wyjdź z gry", font_menus, 45);
-	close_game.setPosition((1100 / 2 - close_game.getGlobalBounds().width / 2), 500);
+	//ten wskaźnik zapamiętuje, który przycisk jest aktualnie aktywny, jak się najedzie myszką to ten wskaźnik jest odpowiednio umieszczany (kod nizej)
+	MenuButton* hoverButton = nullptr;
+
 
 	std::fstream save_file;
 	save_file.open("save.txt", std::ios::in);
 
-	while (state == MAIN_MENU)
-	{
-		Vector2f mouse(Mouse::getPosition(monopoly_game));
+	while (state == GameState::MAIN_MENU)
+	{		
+		Vector2f mouse(Mouse::getPosition(window));
+		//w kazdej iteracji najpierw ustawiam ten wskaznik na nullptr bo zakladam ze zaden przycisk nie jest zaznaczony
+		hoverButton = nullptr;
+		//przechodze przez wszystkie przyciski i sprawdzam czy mysz jest na jakims. Jeśli tak to ustawiam mu odpowiedni styl oraz zapamiętuje sobie we wskaźniku który to był
+		for(auto& button : buttons)
+		if (button.GetText().getGlobalBounds().contains(mouse))
+		{
+			button.GetText().setStyle(Text::Bold);
+			button.GetText().setColor(Color(197, 0, 8, 255));
+			hoverButton = &button;
+		}
+		else
+		{
+			button.GetText().setStyle(Text::Regular);
+			button.GetText().setColor(Color::Black);
+		}
+
+
 		Event event;
-		while (monopoly_game.pollEvent(event))
+		//teraz obsługa eventów się bardzo uprościła
+		while (window.pollEvent(event))
 		{
 			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
 			{
-				state = END;
+				state = GameState::END;
 				break;
 			}
 
-			// close game
-			if (close_game.getGlobalBounds().contains(mouse))
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverButton)//tutaj tylko sobie sprawdzam, czy któryś z przycisków jest aktywny w momencie kliknięcia myszy
 			{
-				close_game.setStyle(Text::Bold);
-				close_game.setColor(Color(197, 0, 8, 255));
-				if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
-				{
-					state = END;
-					break;
-				}
-			}
-			else
-			{
-				close_game.setStyle(Text::Regular);
-				close_game.setColor(Color::Black);
-			}
-
-			// continue game
-			
-			if (continue_game.getGlobalBounds().contains(mouse))
-			{
-				if (save_file.good()) // file exists "save.txt"
-				{
-					continue_game.setStyle(Text::Bold);
-					continue_game.setColor(Color(197, 0, 8, 255));
-					if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
-					{
-						//state = CONTINUE;
-						break;
-					}
-				}
-			}
-			else
-			{
-				continue_game.setStyle(Text::Regular);
-				if (save_file.good()) // file exists "save.txt"
-				{
-					continue_game.setColor(Color::Black);
-				}
-				else
-				{
-					continue_game.setColor(Color(145, 145, 145, 255));
-				}
-			}
-
-			// new game
-			if (new_game.getGlobalBounds().contains(mouse))
-			{
-				new_game.setStyle(Text::Bold);
-				new_game.setColor(Color(197, 0, 8, 255));
-				if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
-				{
-					state = NEW_GAME;
-					break;
-				}
-			}
-			else
-			{
-				new_game.setStyle(Text::Regular);
-				new_game.setColor(Color::Black);
-			}
-
-			// back to main menu
-			if (back.getGlobalBounds().contains(mouse))
-			{
-				back.setStyle(Text::Bold);
-				back.setColor(Color(197, 0, 8, 255));
-				if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
-				{
-					state = MODE_MENU;
-					break;
-				}
-			}
-			else
-			{
-				back.setStyle(Text::Regular);
-				back.setColor(Color::Black);
-			}
+				state = hoverButton->GetState(); //no i jesli jest to ustawiam stan na taki jaki jest zapamietany w tym przycisku
+				break;
+			}		
 		}
-		monopoly_game.clear();
-		monopoly_game.draw(bg);
-		monopoly_game.draw(close_game);
-		if (!getGameMode())							// Block "continue" when game is online
-			monopoly_game.draw(continue_game);
-		monopoly_game.draw(back); // przeczytac o maszynie stanów
-		monopoly_game.draw(new_game);
-		monopoly_game.display();
+		window.clear();
+		window.draw(bg);
+		//tutaj wyswietlam te przyciski, które powinny być widoczne
+		for (auto& button : buttons)
+			if(button.IsVisible())
+				window.draw(button.GetText());	
+		window.display();
+		
 	}
 	save_file.close();
 }
 
 void Game::players_menu()
 {
-	monopoly_game.setPosition(Vector2i(100, 10));
-	monopoly_game.setKeyRepeatEnabled(false);
+	window.setPosition(Vector2i(100, 10));
+	window.setKeyRepeatEnabled(false);
 	bg.setTexture(bg_monopoly_logo);
 
 	Text title(L"Wybierz liczbę graczy:", font_menus, 65);
@@ -320,15 +277,15 @@ void Game::players_menu()
 	four_players_img.setTexture(four_players);
 	four_players_img.setPosition(740, 410);
 
-	while (state == NEW_GAME)
+	while (state == GameState::NEW_GAME)
 	{
-		Vector2f mouse(Mouse::getPosition(monopoly_game));
+		Vector2f mouse(Mouse::getPosition(window));
 		Event event;
-		while (monopoly_game.pollEvent(event))
+		while (window.pollEvent(event))
 		{
 			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
 			{
-				state = END;
+				state = GameState::END;
 				break;
 			}
 
@@ -339,7 +296,7 @@ void Game::players_menu()
 				close_game.setColor(Color(197, 0, 8, 255));
 				if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 				{
-					state = END;
+					state = GameState::END;
 					break;
 				}
 			}
@@ -356,7 +313,7 @@ void Game::players_menu()
 				back.setColor(Color(197, 0, 8, 255));
 				if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 				{
-					state = MAIN_MENU;
+					state = GameState::MAIN_MENU;
 					break;
 				}
 			}
@@ -414,14 +371,14 @@ void Game::players_menu()
 				four_players_img.setTexture(four_players);
 			}
 		}
-		monopoly_game.clear();
-		monopoly_game.draw(bg);
-		monopoly_game.draw(title);
-		monopoly_game.draw(two_players_img);
-		monopoly_game.draw(three_players_img);
-		monopoly_game.draw(four_players_img);
-		monopoly_game.draw(back);
-		monopoly_game.draw(close_game);
-		monopoly_game.display();
+		window.clear();
+		window.draw(bg);
+		window.draw(title);
+		window.draw(two_players_img);
+		window.draw(three_players_img);
+		window.draw(four_players_img);
+		window.draw(back);
+		window.draw(close_game);
+		window.display();
 	}
 }

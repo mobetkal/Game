@@ -4,6 +4,6 @@
 class Monopoly
 {
 	sf::Texture game_board;
-	sf::Font 
+	sf::Font;
 
 };

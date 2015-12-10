@@ -7,6 +7,6 @@ int main()
 {
 	FreeConsole();
 	Game monopoly;
-	monopoly.rungame();
+	monopoly.Rungame();
 	return 0;
 }

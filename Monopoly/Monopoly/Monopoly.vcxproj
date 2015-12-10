@@ -80,6 +80,8 @@
     <ClCompile Include="player.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="buttonsprite.h" />
+    <ClInclude Include="buttontext.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="monopoly.h" />
     <ClInclude Include="player.h" />

@@ -1,6 +1,8 @@
 ﻿#include <iostream>
 #include <SFML/Graphics.hpp>
 #include "game.h"
+#include "buttonsprite.h"
+#include "buttontext.h"
 #include <fstream>
 #include <Windows.h>
 #include <vector>
@@ -79,12 +81,12 @@ void Game::Rungame()
 void Game::ModeMenu()
 {
 	bg.setTexture(bg_monopoly_logo);
-	vector<Button_Text> buttons;
+	vector<ButtonText> buttons;
 	buttons.emplace_back(L"Gra online", font_menus, 45, 400, GameState::MAIN_MENU);
 	buttons.emplace_back(L"Gra offline", font_menus, 45, 470, GameState::MAIN_MENU);
 	buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 540, GameState::END);
 
-	Button_Text* hoverButton_text = nullptr;
+	ButtonText* hoverButton_text = nullptr;
 
 	Text title(L"Wybierz tryb gry:", font_menus, 65);
 	title.setPosition((1100 / 2 - title.getGlobalBounds().width / 2), 300);
@@ -147,14 +149,14 @@ void Game::MainMenu()
 	bg.setTexture(bg_monopoly_logo);
 
 	//Przechowuję wszystkie przyciski w wektorze zamiast po prostu dla uproszczenia
-	vector<Button_Text> text_buttons;
+	vector<ButtonText> text_buttons;
 	text_buttons.emplace_back(L"Kontynuuj grę", font_menus, 45, 350, GameState::END, !GetGameMode()); //ma Pan tam zakomentowany stan CONTINUE, a musze jakis ustawic
 	text_buttons.emplace_back(L"Nowa gra", font_menus, 45, 400, GameState::PLAYERS_MENU);
 	text_buttons.emplace_back(L"Powrót", font_menus, 45, 450, GameState::MODE_MENU);
 	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 500, GameState::END);
 
 	//ten wskaźnik zapamiętuje, który przycisk jest aktualnie aktywny, jak się najedzie myszką to ten wskaźnik jest odpowiednio umieszczany (kod nizej)
-	Button_Text* hoverButton_text = nullptr;
+	ButtonText* hoverButton_text = nullptr;
 
 	fstream save_file;
 	save_file.open("save.txt", ios::in);
@@ -214,18 +216,18 @@ void Game::PlayersMenu()
 	title.setPosition((1100 / 2 - title.getGlobalBounds().width / 2), 300);
 	title.setColor(Color::Black);
 
-	vector<Button_Text> text_buttons;
+	vector<ButtonText> text_buttons;
 	text_buttons.emplace_back(L"Powrót", font_menus, 45, 550, GameState::MAIN_MENU);
 	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 600, GameState::END);
 
-	Button_Text* hoverButton_text = nullptr;
+	ButtonText* hoverButton_text = nullptr;
 
-	vector<Button_Sprite> img_buttons;
+	vector<ButtonSprite> img_buttons;
 	img_buttons.emplace_back(make_pair(two_players, two_players2), 180, 410, GameState::END);
 	img_buttons.emplace_back(make_pair(three_players, three_players2), 450, 410, GameState::END);
 	img_buttons.emplace_back(make_pair(four_players, four_players2), 740, 410, GameState::END);
 	
-	Button_Sprite* hoverButton_img = nullptr;
+	ButtonSprite* hoverButton_img = nullptr;
 
 	while (state == GameState::PLAYERS_MENU)
 	{

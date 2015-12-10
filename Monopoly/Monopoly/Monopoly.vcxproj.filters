@@ -35,5 +35,11 @@
     <ClInclude Include="monopoly.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="buttonsprite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="buttontext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

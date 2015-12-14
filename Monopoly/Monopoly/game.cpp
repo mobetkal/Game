@@ -1,12 +1,12 @@
 ﻿#include <iostream>
 #include <SFML/Graphics.hpp>
-#include <SFML/Window/Keyboard.hpp>
 #include "game.h"
 #include "buttonsprite.h"
 #include "buttontext.h"
 #include <fstream>
 #include <Windows.h>
 #include <vector>
+#include "frame.h"
 
 using namespace std;
 using namespace sf;
@@ -319,34 +319,29 @@ void Game::SetNames()
 	bg.setTexture(bg_monopoly_logo);
 
 	Text title(L"Wpisz nicki graczy:", font_menus, 65);
-	title.setPosition((1100 / 2 - title.getGlobalBounds().width / 2), 290);
+	title.setPosition((float)(1100 / 2 - title.getGlobalBounds().width / 2), 290.0f);
 	title.setColor(Color::Black);
 	vector<Text> players;
-	vector<Sprite> frames;
-	unsigned int y = 380;
+	vector<Frame> frames;
 	for (int i = 1; i <= GetPlayers(); ++i)
 	{
 		players.emplace_back(L"Player " + to_string(i) + ":", font_menus, 40);
-		players[i - 1].setPosition((1100 / 2 - title.getGlobalBounds().width / 2) + 20, y);
+		players[i - 1].setPosition((float)((1100 / 2 - title.getGlobalBounds().width / 2) + 20), (float)(380 + (i - 1) * 55));
 		players[i - 1].setColor(Color::Black);
-		frames.emplace_back();
-		frame.setRepeated(true);
-		frames[i - 1].setTexture(frame);
-		frames[i - 1].setPosition(450, y);
-		y = y + 55;
+		frames.emplace_back(frame, 450, 380 + (i - 1) * 55, "", font_menus, 30);
 	}
 	vector<ButtonText> text_buttons;
 	text_buttons.emplace_back(L"Powrót", font_menus, 45, 590, GameState::PLAYERS_MENU);
 	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 635, GameState::END);
 
 	ButtonText* hoverButton_text = nullptr;
-	string name = "";
-	Text test(name, font_menus, 30);
-	bool active = false;
+	Frame* onFrame = nullptr;
+
 	while (state == GameState::SET_NAMES)
 	{
 		Vector2f mouse(Mouse::getPosition(window));
 		hoverButton_text = nullptr;
+		onFrame = nullptr;
 		for (auto& button : text_buttons)
 		if (button.GetText().getGlobalBounds().contains(mouse))
 		{
@@ -359,44 +354,49 @@ void Game::SetNames()
 			button.GetText().setStyle(Text::Regular);
 			button.GetText().setColor(Color::Black);
 		}
+		for (auto& sector : frames)
+		if (sector.GetSprite().getGlobalBounds().contains(mouse) && Mouse::isButtonPressed(Mouse::Left))
+		{
+			onFrame = &sector;
+			/*if (onFrame)
+				onFrame->TurnActive(true);*/
+		}
 		Event event;
 		while (window.pollEvent(event))
 		{
-			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
+			/*if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
 			{
 				state = GameState::END;
 				break;
-			}
+			}*/
 			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverButton_text)
 			{
 				state = hoverButton_text->GetState();
 				break;
 			}
-			if (frames[0].getGlobalBounds().contains(mouse) && event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
+			/*if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 			{
-				active = true;
-			}
-			else if (!frames[0].getGlobalBounds().contains(mouse) && event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
-			{
-				active = false;
-			}
-			if (active && event.type == Event::TextEntered)
+				if (onFrame)
+					onFrame->TurnActive(true);
+				else
+					onFrame->TurnActive(false); && onFrame->IsActive()
+			}*/
+			if (onFrame && event.type == Event::TextEntered)
 			{				
-				if (event.text.unicode == 8 && name.size() != 0)
+				if (event.text.unicode == 8 && onFrame->GetString().size() != 0) // Backspace
 				{
-					name.pop_back();
-					test.setString(name);
-					test.setColor(Color::Black);
-					test.setPosition(frames[0].getPosition().x + 18, frames[0].getPosition().y + 5);
+					onFrame->GetString().pop_back();
+					onFrame->SetText(onFrame->GetString());
 				}
-				else if (event.text.unicode == 13)
-					active = false;
-				else if (event.text.unicode > 31 && event.text.unicode < 128 && name.size() < 14)
+				else if (event.text.unicode == 13) // Enter
 				{
-					name.push_back((char)event.text.unicode);
-					test.setString(name);
-					test.setColor(Color::Black);
-					test.setPosition(frames[0].getPosition().x + 18, frames[0].getPosition().y + 5);
+					onFrame->TurnActive(false);
+					onFrame = nullptr;
+				}
+				else if (event.text.unicode > 31 && event.text.unicode < 128 && onFrame->GetString().size() < 14)
+				{
+					onFrame->GetString().push_back((char)event.text.unicode);
+					onFrame->SetText(onFrame->GetString());
 				}
 			}
 		}
@@ -414,9 +414,9 @@ void Game::SetNames()
 		}
 		for (auto& frame : frames)
 		{
-			window.draw(frame);
+			window.draw(frame.GetSprite());
+			window.draw(frame.GetText());
 		}
-		window.draw(test);
 		window.display();
 	}
 }

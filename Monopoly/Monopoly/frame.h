@@ -1,29 +1,42 @@
 #pragma once
+#include <SFML/Graphics.hpp>
+#include <iostream>
 #include "game.h"
 
 class Frame
 {
 	sf::Sprite frame;
-	sf::Text name;
+	sf::Text text;
+	std::string name;
 	bool active;
 public:
-	Frame(sf::Texture texture, unsigned int x, unsigned int y, sf::Font font, unsigned int size, bool active = false)
+	Frame(sf::Texture& texture, float x, float y, const std::string& text, const sf::Font& font, unsigned int size, bool active = false)
 		:
-		name("", font, size)
+		text(text, font, size),
+		active(active),
+		name(text)
 	{
 		texture.setSmooth(true);
 		frame.setTexture(texture);
 		frame.setPosition(x, y);
-		name.setPosition(x + 18, y + 5);
-		name.setColor(sf::Color::Black);
+		this->text.setPosition(x + 18, y + 5);
+		this->text.setColor(sf::Color::Black);
 	}
-	sf::Text& GetText()
+	std::string& GetString()
 	{
 		return name;
 	}
+	sf::Text& GetText()
+	{
+		return text;
+	}
+	sf::Sprite& GetSprite()
+	{
+		return frame;
+	}
 	void SetText(std::string name)
 	{
-		this->name.setString(name);
+		this->text.setString(name);
 	}
 	bool IsActive() const
 	{

@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <SFML/Graphics.hpp>
+#include <SFML/Window/Keyboard.hpp>
 #include "game.h"
 #include "buttonsprite.h"
 #include "buttontext.h"
@@ -13,16 +14,18 @@ using namespace sf;
 Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 {
 	window.setPosition(Vector2i(100, 10));
-	window.setKeyRepeatEnabled(false);
+	window.setKeyRepeatEnabled(true);
 	state = GameState::END;
 
-	if ((!bg_monopoly_logo.loadFromFile("graphics/bg_monopoly_logo.png")))
+	if ((!bg_monopoly_logo.loadFromFile("graphics/bg_monopoly_logo.png")) || (!game_board.loadFromFile("graphics/game_board.png")))
 		return;
 	if ((!two_players.loadFromFile("graphics/two_players.png")) || (!two_players2.loadFromFile("graphics/two_players2.png")))
 		return;
 	if ((!three_players.loadFromFile("graphics/three_players.png")) || (!three_players2.loadFromFile("graphics/three_players2.png")))
 		return;
 	if ((!four_players.loadFromFile("graphics/four_players.png")) || (!four_players2.loadFromFile("graphics/four_players2.png")))
+		return;
+	if ((!frame.loadFromFile("graphics/frame.png")))
 		return;
 
 	if ((!font.loadFromFile("font/font.ttf")) || (!font_menus.loadFromFile("font/kawoszeh.ttf")))
@@ -70,6 +73,16 @@ void Game::Rungame()
 		case GameState::PLAYERS_MENU:
 		{
 				  PlayersMenu();
+				  break;
+		}
+		case GameState::SET_NAMES:
+		{
+				  SetNames();
+			      break;
+		}
+		case GameState::START_GAME:
+		{
+				  StartGame();
 				  break;
 		}
 		default:
@@ -223,9 +236,9 @@ void Game::PlayersMenu()
 	ButtonText* hoverButton_text = nullptr;
 
 	vector<ButtonSprite> img_buttons;
-	img_buttons.emplace_back(make_pair(two_players, two_players2), 180, 410, GameState::END);
-	img_buttons.emplace_back(make_pair(three_players, three_players2), 450, 410, GameState::END);
-	img_buttons.emplace_back(make_pair(four_players, four_players2), 740, 410, GameState::END);
+	img_buttons.emplace_back(make_pair(two_players, two_players2), 180, 410, GameState::SET_NAMES);
+	img_buttons.emplace_back(make_pair(three_players, three_players2), 450, 410, GameState::SET_NAMES);
+	img_buttons.emplace_back(make_pair(four_players, four_players2), 740, 410, GameState::SET_NAMES);
 	
 	ButtonSprite* hoverButton_img = nullptr;
 
@@ -297,6 +310,127 @@ void Game::PlayersMenu()
 			if (button.IsVisible())
 				window.draw(button.GetSprite());
 		}
+		window.display();
+	}
+}
+
+void Game::SetNames()
+{
+	bg.setTexture(bg_monopoly_logo);
+
+	Text title(L"Wpisz nicki graczy:", font_menus, 65);
+	title.setPosition((1100 / 2 - title.getGlobalBounds().width / 2), 290);
+	title.setColor(Color::Black);
+	vector<Text> players;
+	vector<Sprite> frames;
+	unsigned int y = 380;
+	for (int i = 1; i <= GetPlayers(); ++i)
+	{
+		players.emplace_back(L"Player " + to_string(i) + ":", font_menus, 40);
+		players[i - 1].setPosition((1100 / 2 - title.getGlobalBounds().width / 2) + 20, y);
+		players[i - 1].setColor(Color::Black);
+		frames.emplace_back();
+		frame.setRepeated(true);
+		frames[i - 1].setTexture(frame);
+		frames[i - 1].setPosition(450, y);
+		y = y + 55;
+	}
+	vector<ButtonText> text_buttons;
+	text_buttons.emplace_back(L"Powrót", font_menus, 45, 590, GameState::PLAYERS_MENU);
+	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 635, GameState::END);
+
+	ButtonText* hoverButton_text = nullptr;
+	string name = "";
+	Text test(name, font_menus, 30);
+	bool active = false;
+	while (state == GameState::SET_NAMES)
+	{
+		Vector2f mouse(Mouse::getPosition(window));
+		hoverButton_text = nullptr;
+		for (auto& button : text_buttons)
+		if (button.GetText().getGlobalBounds().contains(mouse))
+		{
+			button.GetText().setStyle(Text::Bold);
+			button.GetText().setColor(Color(197, 0, 8, 255));
+			hoverButton_text = &button;
+		}
+		else
+		{
+			button.GetText().setStyle(Text::Regular);
+			button.GetText().setColor(Color::Black);
+		}
+		Event event;
+		while (window.pollEvent(event))
+		{
+			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
+			{
+				state = GameState::END;
+				break;
+			}
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverButton_text)
+			{
+				state = hoverButton_text->GetState();
+				break;
+			}
+			if (frames[0].getGlobalBounds().contains(mouse) && event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
+			{
+				active = true;
+			}
+			else if (!frames[0].getGlobalBounds().contains(mouse) && event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
+			{
+				active = false;
+			}
+			if (active && event.type == Event::TextEntered)
+			{				
+				if (event.text.unicode == 8 && name.size() != 0)
+				{
+					name.pop_back();
+					test.setString(name);
+					test.setColor(Color::Black);
+					test.setPosition(frames[0].getPosition().x + 18, frames[0].getPosition().y + 5);
+				}
+				else if (event.text.unicode == 13)
+					active = false;
+				else if (event.text.unicode > 31 && event.text.unicode < 128 && name.size() < 14)
+				{
+					name.push_back((char)event.text.unicode);
+					test.setString(name);
+					test.setColor(Color::Black);
+					test.setPosition(frames[0].getPosition().x + 18, frames[0].getPosition().y + 5);
+				}
+			}
+		}
+		window.clear();
+		window.draw(bg);
+		window.draw(title);
+		for (auto& player : players)
+		{
+			window.draw(player);
+		}
+		for (auto& button : text_buttons)
+		{
+			if (button.IsVisible())
+				window.draw(button.GetText());
+		}
+		for (auto& frame : frames)
+		{
+			window.draw(frame);
+		}
+		window.draw(test);
+		window.display();
+	}
+}
+
+void Game::StartGame()
+{
+	bg.setTexture(game_board);
+
+
+	while (state == GameState::START_GAME)
+	{
+
+		window.clear();
+		window.draw(bg);
 		window.display();
 	}
 }

@@ -41,5 +41,8 @@
     <ClInclude Include="buttontext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="frame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

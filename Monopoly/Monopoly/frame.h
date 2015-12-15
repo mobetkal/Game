@@ -8,18 +8,24 @@ class Frame
 	sf::Text text;
 	std::string name;
 	bool active;
+	std::pair<sf::Texture, sf::Texture> texture;
 public:
-	Frame(sf::Texture& texture, float x, float y, const std::string& text, const sf::Font& font, unsigned int size, bool active = false)
+	Frame(std::pair<sf::Texture, sf::Texture>& texture, float x, float y, const std::string& text, const sf::Font& font, unsigned int size, bool active = false)
 		:
 		text(text, font, size),
 		active(active),
-		name(text)
+		name(text),
+		texture(texture)
 	{
-		texture.setSmooth(true);
-		frame.setTexture(texture);
+		texture.first.setSmooth(true);
+		texture.second.setSmooth(true);
 		frame.setPosition(x, y);
 		this->text.setPosition(x + 18, y + 5);
 		this->text.setColor(sf::Color::Black);
+	}
+	std::pair<sf::Texture, sf::Texture>& GetTexture()
+	{
+		return texture;
 	}
 	std::string& GetString()
 	{

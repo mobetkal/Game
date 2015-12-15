@@ -25,7 +25,7 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 		return;
 	if ((!four_players.loadFromFile("graphics/four_players.png")) || (!four_players2.loadFromFile("graphics/four_players2.png")))
 		return;
-	if ((!frame.loadFromFile("graphics/frame.png")))
+	if ((!frame.loadFromFile("graphics/frame.png")) || (!frame_active.loadFromFile("graphics/frame_active.png")))
 		return;
 
 	if ((!font.loadFromFile("font/font.ttf")) || (!font_menus.loadFromFile("font/kawoszeh.ttf")))
@@ -326,23 +326,23 @@ void Game::SetNames()
 	for (int i = 1; i <= GetPlayers(); ++i)
 	{
 		players.emplace_back(L"Player " + to_string(i) + ":", font_menus, 40);
-		players[i - 1].setPosition((float)((1100 / 2 - title.getGlobalBounds().width / 2) + 20), (float)(380 + (i - 1) * 55));
+		players[i - 1].setPosition((float)((1100 / 2 - title.getGlobalBounds().width / 2) + 15), (float)(380 + (i - 1) * 55));
 		players[i - 1].setColor(Color::Black);
-		frames.emplace_back(frame, 450, 380 + (i - 1) * 55, "", font_menus, 30);
+		frames.emplace_back(make_pair(frame, frame_active), 445, 380 + (i - 1) * 55, "", font_menus, 30);
 	}
+	for (auto& frame : frames)
+		frame.GetSprite().setTexture(frame.GetTexture().first);
 	vector<ButtonText> text_buttons;
 	text_buttons.emplace_back(L"Powrót", font_menus, 45, 590, GameState::PLAYERS_MENU);
 	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 635, GameState::END);
-	text_buttons.emplace_back(L"GRAJ", font_menus, 50, 920, 565, GameState::END);
+	text_buttons.emplace_back(L"GRAJ", font_menus, 50, 920, 565, GameState::START_GAME);
 
 	ButtonText* hoverButton_text = nullptr;
-	Frame* onFrame = nullptr;
 
 	while (state == GameState::SET_NAMES)
 	{
 		Vector2f mouse(Mouse::getPosition(window));
 		hoverButton_text = nullptr;
-		onFrame = nullptr;
 		for (auto& button : text_buttons)
 		if (button.GetText().getGlobalBounds().contains(mouse))
 		{
@@ -359,14 +359,18 @@ void Game::SetNames()
 		Event event;
 		while (window.pollEvent(event))
 		{
-			/*if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
+			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
 			{
 				state = GameState::END;
 				break;
-			}*/
+			}
 			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverButton_text)
 			{
 				state = hoverButton_text->GetState();
+				if (state == GameState::START_GAME)
+				{
+					// STWORZENIE PLAYERSÓW
+				}
 				break;
 			}
 			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
@@ -374,9 +378,15 @@ void Game::SetNames()
 				for (auto& frame : frames)
 				{
 					if (frame.GetSprite().getGlobalBounds().contains(mouse))
+					{
 						frame.TurnActive(true);
+						frame.GetSprite().setTexture(frame.GetTexture().second);
+					}
 					else
+					{
 						frame.TurnActive(false);
+						frame.GetSprite().setTexture(frame.GetTexture().first);
+					}
 				}
 			}
 			if (event.type == Event::TextEntered)
@@ -393,8 +403,9 @@ void Game::SetNames()
 						else if (event.text.unicode == 13) // Enter
 						{
 							frame.TurnActive(false);
+							frame.GetSprite().setTexture(frame.GetTexture().first);
 						}
-						else if (event.text.unicode > 31 && event.text.unicode < 128 && frame.GetString().size() < 14)
+						else if (event.text.unicode > 31 && event.text.unicode < 128 && frame.GetString().size() < 15)
 						{
 							frame.GetString().push_back((char)event.text.unicode);
 							frame.SetText(frame.GetString());
@@ -431,6 +442,23 @@ void Game::StartGame()
 
 	while (state == GameState::START_GAME)
 	{
+		Vector2f mouse(Mouse::getPosition(window));
+
+
+
+
+		Event event;
+		while (window.pollEvent(event))
+		{
+			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
+			{
+				state = GameState::END;
+				break;
+			}
+
+
+		}
+
 
 		window.clear();
 		window.draw(bg);

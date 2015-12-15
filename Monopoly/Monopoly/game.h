@@ -9,7 +9,7 @@ class Game
 	GameState state;
 	sf::Texture bg_monopoly_logo, game_board;
 	sf::Texture two_players, three_players, four_players, two_players2, three_players2, four_players2;
-	sf::Texture frame;
+	sf::Texture frame, frame_active;
 	sf::Sprite bg;
 	sf::Font font, font_menus;
 	bool game_mode; // "true" when game is online

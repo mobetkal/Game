@@ -333,6 +333,7 @@ void Game::SetNames()
 	vector<ButtonText> text_buttons;
 	text_buttons.emplace_back(L"Powrót", font_menus, 45, 590, GameState::PLAYERS_MENU);
 	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 635, GameState::END);
+	text_buttons.emplace_back(L"GRAJ", font_menus, 50, 920, 565, GameState::END);
 
 	ButtonText* hoverButton_text = nullptr;
 	Frame* onFrame = nullptr;
@@ -354,13 +355,7 @@ void Game::SetNames()
 			button.GetText().setStyle(Text::Regular);
 			button.GetText().setColor(Color::Black);
 		}
-		for (auto& sector : frames)
-		if (sector.GetSprite().getGlobalBounds().contains(mouse) && Mouse::isButtonPressed(Mouse::Left))
-		{
-			onFrame = &sector;
-			/*if (onFrame)
-				onFrame->TurnActive(true);*/
-		}
+		
 		Event event;
 		while (window.pollEvent(event))
 		{
@@ -374,29 +369,37 @@ void Game::SetNames()
 				state = hoverButton_text->GetState();
 				break;
 			}
-			/*if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 			{
-				if (onFrame)
-					onFrame->TurnActive(true);
-				else
-					onFrame->TurnActive(false); && onFrame->IsActive()
-			}*/
-			if (onFrame && event.type == Event::TextEntered)
-			{				
-				if (event.text.unicode == 8 && onFrame->GetString().size() != 0) // Backspace
+				for (auto& frame : frames)
 				{
-					onFrame->GetString().pop_back();
-					onFrame->SetText(onFrame->GetString());
+					if (frame.GetSprite().getGlobalBounds().contains(mouse))
+						frame.TurnActive(true);
+					else
+						frame.TurnActive(false);
 				}
-				else if (event.text.unicode == 13) // Enter
+			}
+			if (event.type == Event::TextEntered)
+			{
+				for (auto& frame : frames)
 				{
-					onFrame->TurnActive(false);
-					onFrame = nullptr;
-				}
-				else if (event.text.unicode > 31 && event.text.unicode < 128 && onFrame->GetString().size() < 14)
-				{
-					onFrame->GetString().push_back((char)event.text.unicode);
-					onFrame->SetText(onFrame->GetString());
+					if (frame.IsActive())
+					{
+						if (event.text.unicode == 8 && frame.GetString().size() != 0) // Backspace
+						{
+							frame.GetString().pop_back();
+							frame.SetText(frame.GetString());
+						}
+						else if (event.text.unicode == 13) // Enter
+						{
+							frame.TurnActive(false);
+						}
+						else if (event.text.unicode > 31 && event.text.unicode < 128 && frame.GetString().size() < 14)
+						{
+							frame.GetString().push_back((char)event.text.unicode);
+							frame.SetText(frame.GetString());
+						}
+					}
 				}
 			}
 		}

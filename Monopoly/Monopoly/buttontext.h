@@ -1,5 +1,6 @@
 #pragma once
-#include "game.h"
+#include <iostream>
+#include <SFML/Graphics.hpp>
 
 class ButtonText
 {

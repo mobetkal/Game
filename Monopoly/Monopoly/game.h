@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include <SFML/Graphics.hpp>
-#include <SFML/System/String.hpp>
 
 enum class GameState { MODE_MENU, MAIN_MENU, PLAYERS_MENU, SET_NAMES, START_GAME, END };
 

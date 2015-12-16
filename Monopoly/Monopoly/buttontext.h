@@ -6,21 +6,18 @@ class ButtonText
 {
 	sf::Text button_text;
 	GameState state;
-	bool visible;
 public:
-	ButtonText(const sf::String& text, const sf::Font& font, unsigned int characterSize, float y, GameState state, bool visibility = true)
+	ButtonText(const sf::String& text, const sf::Font& font, unsigned int characterSize, float y, GameState state)
 		:
 		button_text(text, font, characterSize),
-		state(state),
-		visible(visibility)
+		state(state)
 	{
 		button_text.setPosition((1100 / 2 - button_text.getGlobalBounds().width / 2), y);
 	}
-	ButtonText(const sf::String& text, const sf::Font& font, unsigned int characterSize, float x, float y, GameState state, bool visibility = true)
+	ButtonText(const sf::String& text, const sf::Font& font, unsigned int characterSize, float x, float y, GameState state)
 		:
 		button_text(text, font, characterSize),
-		state(state),
-		visible(visibility)
+		state(state)
 	{
 		button_text.setPosition(x, y);
 	}
@@ -31,9 +28,5 @@ public:
 	GameState GetState() const
 	{
 		return state;
-	}
-	bool IsVisible() const
-	{
-		return visible;
 	}
 };

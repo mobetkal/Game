@@ -27,10 +27,20 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 		return;
 	if ((!frame.loadFromFile("graphics/frame.png")) || (!frame_active.loadFromFile("graphics/frame_active.png")))
 		return;
+	vector<Texture> pawn(4);
+	if ((!pawn[1].loadFromFile("graphics/yellow.png")) || (!pawn[2].loadFromFile("graphics/green.png")))
+		return;
+	if ((!pawn[3].loadFromFile("graphics/red.png")) || (!pawn[0].loadFromFile("graphics/blue.png")))
+		return;
+	for (int i = 0; i < pawn.size(); ++i)
+	{
+		pawn[i].setSmooth(true);
+		pawns.emplace_back(pawn[i]);
+	}
 
 	if ((!font.loadFromFile("font/font.ttf")) || (!font_menus.loadFromFile("font/kawoszeh.ttf")))
 		return;
-
+	
 	state = GameState::MODE_MENU;
 }
 
@@ -102,7 +112,7 @@ void Game::ModeMenu()
 	ButtonText* hoverButton_text = nullptr;
 
 	Text title(L"Wybierz tryb gry:", font_menus, 65);
-	title.setPosition((1100 / 2 - title.getGlobalBounds().width / 2), 300);
+	title.setPosition((float)(1100 / 2 - title.getGlobalBounds().width / 2), 300.0f);
 	title.setColor(Color::Black);
 		
 	while (state == GameState::MODE_MENU)
@@ -145,30 +155,23 @@ void Game::ModeMenu()
 		window.draw(bg);
 		window.draw(title);
 		for (auto &button : buttons)
-		{
-			if (button.IsVisible())
-				window.draw(button.GetText());
-		}
+			window.draw(button.GetText());
 		window.display();
 	}
 }
 
 
-/*
-Istotnych zmian dokonałem tylko w tej metodzie
-*/
 void Game::MainMenu()
 {
 	bg.setTexture(bg_monopoly_logo);
 
-	//Przechowuję wszystkie przyciski w wektorze zamiast po prostu dla uproszczenia
 	vector<ButtonText> text_buttons;
-	text_buttons.emplace_back(L"Kontynuuj grę", font_menus, 45, 350, GameState::END, !GetGameMode()); //ma Pan tam zakomentowany stan CONTINUE, a musze jakis ustawic
-	text_buttons.emplace_back(L"Nowa gra", font_menus, 45, 400, GameState::PLAYERS_MENU);
-	text_buttons.emplace_back(L"Powrót", font_menus, 45, 450, GameState::MODE_MENU);
-	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 500, GameState::END);
+	if (!game_mode)
+		text_buttons.emplace_back(L"Kontynuuj grę", font_menus, 45, 350, GameState::END); // Dorobić CONTINUE
+	text_buttons.emplace_back(L"Nowa gra", font_menus, 45, 410, GameState::PLAYERS_MENU);
+	text_buttons.emplace_back(L"Powrót", font_menus, 45, 470, GameState::MODE_MENU);
+	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 530, GameState::END);
 
-	//ten wskaźnik zapamiętuje, który przycisk jest aktualnie aktywny, jak się najedzie myszką to ten wskaźnik jest odpowiednio umieszczany (kod nizej)
 	ButtonText* hoverButton_text = nullptr;
 
 	fstream save_file;
@@ -177,9 +180,7 @@ void Game::MainMenu()
 	while (state == GameState::MAIN_MENU)
 	{		
 		Vector2f mouse(Mouse::getPosition(window));
-		//w kazdej iteracji najpierw ustawiam ten wskaznik na nullptr bo zakladam ze zaden przycisk nie jest zaznaczony
 		hoverButton_text = nullptr;
-		//przechodze przez wszystkie przyciski i sprawdzam czy mysz jest na jakims. Jeśli tak to ustawiam mu odpowiedni styl oraz zapamiętuje sobie we wskaźniku który to był
 		for (auto& button : text_buttons)
 		if (button.GetText().getGlobalBounds().contains(mouse))
 		{
@@ -194,7 +195,6 @@ void Game::MainMenu()
 		}
 
 		Event event;
-		//teraz obsługa eventów się bardzo uprościła
 		while (window.pollEvent(event))
 		{
 			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
@@ -203,18 +203,16 @@ void Game::MainMenu()
 				break;
 			}
 
-			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverButton_text)//tutaj tylko sobie sprawdzam, czy któryś z przycisków jest aktywny w momencie kliknięcia myszy
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverButton_text)
 			{
-				state = hoverButton_text->GetState(); //no i jesli jest to ustawiam stan na taki jaki jest zapamietany w tym przycisku
+				state = hoverButton_text->GetState();
 				break;
 			}		
 		}
 		window.clear();
 		window.draw(bg);
-		//tutaj wyswietlam te przyciski, które powinny być widoczne
 		for (auto& button : text_buttons)
-			if(button.IsVisible())
-				window.draw(button.GetText());	
+			window.draw(button.GetText());	
 		window.display();
 		
 	}
@@ -226,7 +224,7 @@ void Game::PlayersMenu()
 	bg.setTexture(bg_monopoly_logo);
 
 	Text title(L"Wybierz liczbę graczy:", font_menus, 65);
-	title.setPosition((1100 / 2 - title.getGlobalBounds().width / 2), 300);
+	title.setPosition((float)(1100 / 2 - title.getGlobalBounds().width / 2), 300.0f);
 	title.setColor(Color::Black);
 
 	vector<ButtonText> text_buttons;
@@ -301,15 +299,10 @@ void Game::PlayersMenu()
 		window.draw(bg);
 		window.draw(title);
 		for (auto& button : text_buttons)
-		{
-			if (button.IsVisible())
-				window.draw(button.GetText());
-		}
+			window.draw(button.GetText());
 		for (auto& button : img_buttons)
-		{
 			if (button.IsVisible())
 				window.draw(button.GetSprite());
-		}
 		window.display();
 	}
 }
@@ -323,12 +316,16 @@ void Game::SetNames()
 	title.setColor(Color::Black);
 	vector<Text> players;
 	vector<Frame> frames;
+	vector<Sprite> pawn;
 	for (int i = 1; i <= GetPlayers(); ++i)
 	{
 		players.emplace_back(L"Player " + to_string(i) + ":", font_menus, 40);
 		players[i - 1].setPosition((float)((1100 / 2 - title.getGlobalBounds().width / 2) + 15), (float)(380 + (i - 1) * 55));
 		players[i - 1].setColor(Color::Black);
 		frames.emplace_back(make_pair(frame, frame_active), 445, 380 + (i - 1) * 55, "", font_menus, 30);
+		pawn.emplace_back();
+		pawn[i - 1].setTexture(pawns[i-1]);
+		pawn[i - 1].setPosition((float)((1100 / 2 - title.getGlobalBounds().width / 2) - 20), (float)(380 + (i - 1) * 55));
 	}
 	for (auto& frame : frames)
 		frame.GetSprite().setTexture(frame.GetTexture().first);
@@ -405,7 +402,7 @@ void Game::SetNames()
 							frame.TurnActive(false);
 							frame.GetSprite().setTexture(frame.GetTexture().first);
 						}
-						else if (event.text.unicode > 31 && event.text.unicode < 128 && frame.GetString().size() < 15)
+						else if (event.text.unicode > 31 && event.text.unicode < 123 && frame.GetString().size() < 15)
 						{
 							frame.GetString().push_back((char)event.text.unicode);
 							frame.SetText(frame.GetString());
@@ -418,14 +415,13 @@ void Game::SetNames()
 		window.draw(bg);
 		window.draw(title);
 		for (auto& player : players)
-		{
 			window.draw(player);
-		}
+
+		for (auto& elem : pawn)
+			window.draw(elem);
+
 		for (auto& button : text_buttons)
-		{
-			if (button.IsVisible())
-				window.draw(button.GetText());
-		}
+			window.draw(button.GetText());
 		for (auto& frame : frames)
 		{
 			window.draw(frame.GetSprite());

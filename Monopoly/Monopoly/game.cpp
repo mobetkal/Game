@@ -7,6 +7,9 @@
 #include <Windows.h>
 #include <vector>
 #include "frame.h"
+#include "pawn.h"
+#include "dice.h"
+#include "icon.c"
 
 using namespace std;
 using namespace sf;
@@ -15,6 +18,8 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 {
 	window.setPosition(Vector2i(100, 10));
 	window.setKeyRepeatEnabled(true);
+	window.setIcon(MonopolyIcon.width, MonopolyIcon.height, MonopolyIcon.pixel_data);
+
 	state = GameState::END;
 
 	if ((!bg_monopoly_logo.loadFromFile("graphics/bg_monopoly_logo.png")) || (!game_board.loadFromFile("graphics/game_board.png")))
@@ -28,20 +33,47 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 	if ((!frame.loadFromFile("graphics/frame.png")) || (!frame_active.loadFromFile("graphics/frame_active.png")))
 		return;
 	vector<Texture> pawn(4);
-	if ((!pawn[1].loadFromFile("graphics/yellow.png")) || (!pawn[2].loadFromFile("graphics/green.png")))
+	int pawnSize = pawn.size();
+	if ((!pawn[1].loadFromFile("graphics/pawn/yellow.png")) || (!pawn[2].loadFromFile("graphics/pawn/green.png")))
 		return;
-	if ((!pawn[3].loadFromFile("graphics/red.png")) || (!pawn[0].loadFromFile("graphics/blue.png")))
+	if ((!pawn[3].loadFromFile("graphics/pawn/red.png")) || (!pawn[0].loadFromFile("graphics/pawn/blue.png")))
 		return;
-	for (int i = 0; i < pawn.size(); ++i)
+	for (int i = 0; i < pawnSize; ++i)
 	{
 		pawn[i].setSmooth(true);
-		pawns.emplace_back(pawn[i]);
+		Game::pawns.emplace_back(pawn[i]);
 	}
+	if ((!pawn[1].loadFromFile("graphics/pawn/yellow_pawn.png")) || (!pawn[2].loadFromFile("graphics/pawn/green_pawn.png")))
+		return;
+	if ((!pawn[3].loadFromFile("graphics/pawn/red_pawn.png")) || (!pawn[0].loadFromFile("graphics/pawn/blue_pawn.png")))
+		return;
+	for (int i = 0; i < pawnSize; ++i)
+	{
+		pawn[i].setSmooth(true);
+		Game::pawns_forGame.emplace_back(pawn[i]);
+	}
+	vector<Texture> dice(6);
+	int diceSize = dice.size();
+	if ((!dice[0].loadFromFile("graphics/dice/meshNumber_1.png")) || (!dice[1].loadFromFile("graphics/dice/meshNumber_2.png")))
+		return;
+	if ((!dice[2].loadFromFile("graphics/dice/meshNumber_3.png")) || (!dice[3].loadFromFile("graphics/dice/meshNumber_4.png")))
+		return;
+	if ((!dice[4].loadFromFile("graphics/dice/meshNumber_5.png")) || (!dice[5].loadFromFile("graphics/dice/meshNumber_6.png")))
+		return;
+	for (int i = 0; i < diceSize; ++i)
+	{
+		dice[i].setSmooth(true);
+		Game::dice.emplace_back(dice[i]);
+	}
+	if ((!button_orange.loadFromFile("graphics/button_orange.png")))
+		return;
 
+	// Fonts
 	if ((!font.loadFromFile("font/font.ttf")) || (!font_menus.loadFromFile("font/kawoszeh.ttf")))
 		return;
 	
-	state = GameState::MODE_MENU;
+	//state = GameState::MODE_MENU;
+	state = GameState::START_GAME;
 }
 
 void Game::SetGameMode(bool result)
@@ -105,22 +137,19 @@ void Game::ModeMenu()
 {
 	bg.setTexture(bg_monopoly_logo);
 	vector<ButtonText> buttons;
-	buttons.emplace_back(L"Gra online", font_menus, 45, 400, GameState::MAIN_MENU);
-	buttons.emplace_back(L"Gra offline", font_menus, 45, 470, GameState::MAIN_MENU);
-	buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 540, GameState::END);
+	buttons.emplace_back(L"Wybierz tryb gry:", font_menus, 65, 300.0f, false);
+	buttons.emplace_back(L"Gra online", font_menus, 45, 400.0f, GameState::MAIN_MENU);
+	buttons.emplace_back(L"Gra offline", font_menus, 45, 470.0f, GameState::MAIN_MENU);
+	buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 540.0f, GameState::END);
 
 	ButtonText* hoverButton_text = nullptr;
-
-	Text title(L"Wybierz tryb gry:", font_menus, 65);
-	title.setPosition((float)(1100 / 2 - title.getGlobalBounds().width / 2), 300.0f);
-	title.setColor(Color::Black);
 		
 	while (state == GameState::MODE_MENU)
 	{
 		Vector2f mouse(Mouse::getPosition(window));
 		hoverButton_text = nullptr;
 		for (auto& button : buttons)
-		if (button.GetText().getGlobalBounds().contains(mouse))
+		if (button.GetText().getGlobalBounds().contains(mouse) && button.MakeStyle())
 		{
 			button.GetText().setStyle(Text::Bold);
 			button.GetText().setColor(Color(197, 0, 8, 255));
@@ -153,7 +182,6 @@ void Game::ModeMenu()
 		}
 		window.clear();
 		window.draw(bg);
-		window.draw(title);
 		for (auto &button : buttons)
 			window.draw(button.GetText());
 		window.display();
@@ -167,10 +195,10 @@ void Game::MainMenu()
 
 	vector<ButtonText> text_buttons;
 	if (!game_mode)
-		text_buttons.emplace_back(L"Kontynuuj grę", font_menus, 45, 350, GameState::END); // Dorobić CONTINUE
-	text_buttons.emplace_back(L"Nowa gra", font_menus, 45, 410, GameState::PLAYERS_MENU);
-	text_buttons.emplace_back(L"Powrót", font_menus, 45, 470, GameState::MODE_MENU);
-	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 530, GameState::END);
+		text_buttons.emplace_back(L"Kontynuuj grę", font_menus, 45, 350.0f, GameState::END); // Dorobić CONTINUE
+	text_buttons.emplace_back(L"Nowa gra", font_menus, 45, 410.0f, GameState::PLAYERS_MENU);
+	text_buttons.emplace_back(L"Powrót", font_menus, 45, 470.0f, GameState::MODE_MENU);
+	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 530.0f, GameState::END);
 
 	ButtonText* hoverButton_text = nullptr;
 
@@ -182,7 +210,7 @@ void Game::MainMenu()
 		Vector2f mouse(Mouse::getPosition(window));
 		hoverButton_text = nullptr;
 		for (auto& button : text_buttons)
-		if (button.GetText().getGlobalBounds().contains(mouse))
+		if (button.GetText().getGlobalBounds().contains(mouse) && button.MakeStyle())
 		{
 			button.GetText().setStyle(Text::Bold);
 			button.GetText().setColor(Color(197, 0, 8, 255));
@@ -223,20 +251,17 @@ void Game::PlayersMenu()
 {
 	bg.setTexture(bg_monopoly_logo);
 
-	Text title(L"Wybierz liczbę graczy:", font_menus, 65);
-	title.setPosition((float)(1100 / 2 - title.getGlobalBounds().width / 2), 300.0f);
-	title.setColor(Color::Black);
-
 	vector<ButtonText> text_buttons;
-	text_buttons.emplace_back(L"Powrót", font_menus, 45, 550, GameState::MAIN_MENU);
-	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 600, GameState::END);
+	text_buttons.emplace_back(L"Wybierz liczbę graczy:", font_menus, 65, 300.0f, false);
+	text_buttons.emplace_back(L"Powrót", font_menus, 45, 550.0f, GameState::MAIN_MENU);
+	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 600.0f, GameState::END);
 
 	ButtonText* hoverButton_text = nullptr;
 
 	vector<ButtonSprite> img_buttons;
-	img_buttons.emplace_back(make_pair(two_players, two_players2), 180, 410, GameState::SET_NAMES);
-	img_buttons.emplace_back(make_pair(three_players, three_players2), 450, 410, GameState::SET_NAMES);
-	img_buttons.emplace_back(make_pair(four_players, four_players2), 740, 410, GameState::SET_NAMES);
+	img_buttons.emplace_back(make_pair(two_players, two_players2), 180.0f, 410.0f, GameState::SET_NAMES);
+	img_buttons.emplace_back(make_pair(three_players, three_players2), 450.0f, 410.0f, GameState::SET_NAMES);
+	img_buttons.emplace_back(make_pair(four_players, four_players2), 740.0f, 410.0f, GameState::SET_NAMES);
 	
 	ButtonSprite* hoverButton_img = nullptr;
 
@@ -246,7 +271,7 @@ void Game::PlayersMenu()
 		hoverButton_text = nullptr;
 		hoverButton_img = nullptr;
 		for (auto& button : text_buttons)
-		if (button.GetText().getGlobalBounds().contains(mouse))
+		if (button.GetText().getGlobalBounds().contains(mouse) && button.MakeStyle())
 		{
 			button.GetText().setStyle(Text::Bold);
 			button.GetText().setColor(Color(197, 0, 8, 255));
@@ -297,12 +322,10 @@ void Game::PlayersMenu()
 		}
 		window.clear();
 		window.draw(bg);
-		window.draw(title);
 		for (auto& button : text_buttons)
 			window.draw(button.GetText());
 		for (auto& button : img_buttons)
-			if (button.IsVisible())
-				window.draw(button.GetSprite());
+			window.draw(button.GetSprite());
 		window.display();
 	}
 }
@@ -311,28 +334,26 @@ void Game::SetNames()
 {
 	bg.setTexture(bg_monopoly_logo);
 
-	Text title(L"Wpisz nicki graczy:", font_menus, 65);
-	title.setPosition((float)(1100 / 2 - title.getGlobalBounds().width / 2), 290.0f);
-	title.setColor(Color::Black);
 	vector<Text> players;
 	vector<Frame> frames;
 	vector<Sprite> pawn;
 	for (int i = 1; i <= GetPlayers(); ++i)
 	{
 		players.emplace_back(L"Player " + to_string(i) + ":", font_menus, 40);
-		players[i - 1].setPosition((float)((1100 / 2 - title.getGlobalBounds().width / 2) + 15), (float)(380 + (i - 1) * 55));
+		players[i - 1].setPosition(290.0f, (float)(380 + (i - 1) * 55));
 		players[i - 1].setColor(Color::Black);
-		frames.emplace_back(make_pair(frame, frame_active), 445, 380 + (i - 1) * 55, "", font_menus, 30);
+		frames.emplace_back(make_pair(frame, frame_active), 445.0f, (float)(380 + (i - 1) * 55), "", font_menus, 30);
 		pawn.emplace_back();
 		pawn[i - 1].setTexture(pawns[i-1]);
-		pawn[i - 1].setPosition((float)((1100 / 2 - title.getGlobalBounds().width / 2) - 20), (float)(380 + (i - 1) * 55));
+		pawn[i - 1].setPosition(250.0f, (float)(380 + (i - 1) * 55));
 	}
 	for (auto& frame : frames)
 		frame.GetSprite().setTexture(frame.GetTexture().first);
 	vector<ButtonText> text_buttons;
-	text_buttons.emplace_back(L"Powrót", font_menus, 45, 590, GameState::PLAYERS_MENU);
-	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 635, GameState::END);
-	text_buttons.emplace_back(L"GRAJ", font_menus, 50, 920, 565, GameState::START_GAME);
+	text_buttons.emplace_back(L"Wpisz nicki graczy:", font_menus, 65, 290.0f, false);
+	text_buttons.emplace_back(L"Powrót", font_menus, 45, 590.0f, GameState::PLAYERS_MENU);
+	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 635.0f, GameState::END);
+	text_buttons.emplace_back(L"GRAJ", font_menus, 50, 920, 565.0f, GameState::START_GAME);
 
 	ButtonText* hoverButton_text = nullptr;
 
@@ -413,7 +434,6 @@ void Game::SetNames()
 		}
 		window.clear();
 		window.draw(bg);
-		window.draw(title);
 		for (auto& player : players)
 			window.draw(player);
 
@@ -434,15 +454,41 @@ void Game::SetNames()
 void Game::StartGame()
 {
 	bg.setTexture(game_board);
+	Pawn red(pawns_forGame[3], 0);
+	Dice LeftDice(dice, 800.0f, 100.0f);
+	Dice RightDice(dice, 850.0f, 100.0f);
 
+	vector<ButtonSprite> imgButtons;
+	imgButtons.emplace_back(button_orange, 910.0f, 105.0f);
+
+	vector<ButtonText> textButtons;
+	textButtons.emplace_back(L"Rzuć kostkami!", font_menus, 17, 927.0f, 113.0f);
+
+	ButtonSprite* hoverImgButton = nullptr;
+	ButtonText* hoverTextButton = nullptr;
 
 	while (state == GameState::START_GAME)
 	{
 		Vector2f mouse(Mouse::getPosition(window));
+		hoverImgButton = nullptr;
+		hoverTextButton = nullptr;
 
-
-
-
+		for (auto& button : imgButtons)
+		if (button.GetSprite().getGlobalBounds().contains(mouse))
+		{
+			hoverImgButton = &button;
+		}
+		for (auto& button : textButtons)
+		if (button.GetText().getGlobalBounds().contains(mouse))
+		{
+			hoverTextButton = &button;
+			button.GetText().setStyle(Text::Underlined);
+		}
+		else
+		{
+			button.GetText().setStyle(Text::Regular);
+		}
+		
 		Event event;
 		while (window.pollEvent(event))
 		{
@@ -451,13 +497,33 @@ void Game::StartGame()
 				state = GameState::END;
 				break;
 			}
-
-
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
+			{
+				if (hoverImgButton)
+				{
+					if (hoverImgButton == &imgButtons[0])
+					{
+						int SumMesh = LeftDice.RollDice() + RightDice.RollDice();
+						if (SumMesh != 12)
+							red.move(SumMesh);
+						//else
+							//red.GoJail();
+					}
+						
+				}
+				break;
+			}
 		}
 
 
 		window.clear();
 		window.draw(bg);
+		window.draw(red.GetSprite());
+		window.draw(LeftDice.GetSprite());
+		window.draw(RightDice.GetSprite());
+		window.draw(imgButtons[0].GetSprite());
+		for (auto& button : textButtons)
+			window.draw(button.GetText());
 		window.display();
 	}
 }

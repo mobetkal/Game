@@ -9,12 +9,13 @@ class Game
 	GameState state;
 	sf::Texture bg_monopoly_logo, game_board;
 	sf::Texture two_players, three_players, four_players, two_players2, three_players2, four_players2;
-	sf::Texture frame, frame_active;
-	std::vector<sf::Texture> pawns;
+	sf::Texture frame, frame_active, button_orange;
+	std::vector<sf::Texture> pawns, pawns_forGame;
 	sf::Sprite bg;
 	sf::Font font, font_menus;
 	bool game_mode; // "true" when game is online
 	int players; 
+	std::vector<sf::Texture> dice;
 
 public:
 	Game(void);

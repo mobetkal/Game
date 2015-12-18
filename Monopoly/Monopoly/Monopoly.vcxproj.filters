@@ -44,5 +44,11 @@
     <ClInclude Include="frame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="pawn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

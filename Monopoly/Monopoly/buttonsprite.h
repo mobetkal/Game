@@ -7,23 +7,31 @@ class ButtonSprite
 {
 	sf::Sprite button_sprite;
 	GameState state;
-	bool visible;
-	std::pair<sf::Texture, sf::Texture> texture;
+	std::pair<sf::Texture, sf::Texture> pair_texture;
+	sf::Texture texture;
+
 public:
-	ButtonSprite(std::pair<sf::Texture, sf::Texture> texture, float x, float y, GameState state, bool visibility = true)
+	ButtonSprite(std::pair<sf::Texture, sf::Texture> texture, float x, float y, GameState state)
 		:
-		state(state),
-		visible(visibility)
+		state(state)
 	{
 		texture.first.setSmooth(true);
 		texture.second.setSmooth(true);
-		this->texture.first = texture.first;
-		this->texture.second = texture.second;
+		this->pair_texture.first = texture.first;
+		this->pair_texture.second = texture.second;
 		button_sprite.setPosition(x, y);
+	}
+	ButtonSprite(sf::Texture& texture, float x, float y)
+		:
+		texture(texture)
+	{
+		texture.setSmooth(true);
+		button_sprite.setPosition(x, y);
+		button_sprite.setTexture(texture);
 	}
 	std::pair<sf::Texture, sf::Texture>& GetTexture()
 	{
-		return texture;
+		return pair_texture;
 	}
 	sf::Sprite& GetSprite()
 	{
@@ -32,9 +40,5 @@ public:
 	GameState GetState() const
 	{
 		return state;
-	}
-	bool IsVisible() const
-	{
-		return visible;
 	}
 };

@@ -82,9 +82,11 @@
   <ItemGroup>
     <ClInclude Include="buttonsprite.h" />
     <ClInclude Include="buttontext.h" />
+    <ClInclude Include="dice.h" />
     <ClInclude Include="frame.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="monopoly.h" />
+    <ClInclude Include="pawn.h" />
     <ClInclude Include="player.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

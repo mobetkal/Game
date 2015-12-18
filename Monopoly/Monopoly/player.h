@@ -1,16 +1,26 @@
 #pragma once
 #include <iostream>
+#include "pawn.h"
 
 class Player
 {
-	std::string Name;
-	enum class Color {YELLOW, BLUE, GREEN, LIGHT_BLUE};
-	Color color;
+	const std::string name;
+	Pawn pawn;
 	int money;
-	int move;
-	bool jail_card;
-
+	bool jailCard;
 
 public:
-	Player(){}
+	Player(const std::string& name, Pawn pawn, int players, bool jailCard = false)
+		:
+		name(name),
+		pawn(pawn),
+		money((int)(2000 / players)),
+		jailCard(jailCard)
+	{
+		
+	};
+	Pawn& GetPawn()
+	{
+		return pawn;
+	}
 };

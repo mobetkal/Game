@@ -92,6 +92,7 @@ public:
 					pawn.setPosition(possition[j].first, possition[j].second);
 					area = j;
 				}
+				//DODANIE KASY
 				return;
 			}
 		}

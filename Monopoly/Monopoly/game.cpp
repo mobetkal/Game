@@ -10,6 +10,7 @@
 #include "pawn.h"
 #include "dice.h"
 #include "icon.c"
+#include "player.h"
 
 using namespace std;
 using namespace sf;
@@ -30,7 +31,7 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 		return;
 	if ((!four_players.loadFromFile("graphics/four_players.png")) || (!four_players2.loadFromFile("graphics/four_players2.png")))
 		return;
-	if ((!frame.loadFromFile("graphics/frame.png")) || (!frame_active.loadFromFile("graphics/frame_active.png")))
+	if ((!frame.loadFromFile("graphics/frame.png")) || (!frame_active.loadFromFile("graphics/frame_active.png")) || (!frame_wrong.loadFromFile("graphics/frame_wrong.png")))
 		return;
 	vector<Texture> pawn(4);
 	int pawnSize = pawn.size();
@@ -72,8 +73,8 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 	if ((!font.loadFromFile("font/font.ttf")) || (!font_menus.loadFromFile("font/kawoszeh.ttf")))
 		return;
 	
-	//state = GameState::MODE_MENU;
-	state = GameState::START_GAME;
+	state = GameState::MODE_MENU;
+	//state = GameState::START_GAME;
 }
 
 void Game::SetGameMode(bool result)
@@ -362,7 +363,7 @@ void Game::SetNames()
 		Vector2f mouse(Mouse::getPosition(window));
 		hoverButton_text = nullptr;
 		for (auto& button : text_buttons)
-		if (button.GetText().getGlobalBounds().contains(mouse))
+		if (button.GetText().getGlobalBounds().contains(mouse) && button.MakeStyle())
 		{
 			button.GetText().setStyle(Text::Bold);
 			button.GetText().setColor(Color(197, 0, 8, 255));
@@ -387,7 +388,29 @@ void Game::SetNames()
 				state = hoverButton_text->GetState();
 				if (state == GameState::START_GAME)
 				{
-					// STWORZENIE PLAYERSÓW
+					bool wrong = false;
+					int frameSize = frames.size();
+					for (int i = 0; i < frameSize; ++i)
+					{
+						for (int j = i + 1; j < frameSize; ++j)
+						if (frames[i].GetString() == frames[j].GetString())
+						{
+							frames[i].GetSprite().setTexture(frame_wrong);
+							frames[j].GetSprite().setTexture(frame_wrong);
+							state = GameState::SET_NAMES;
+							wrong = true;
+						}
+					}
+					for (auto& frame : frames)
+					{
+						if (frame.GetString() == "" || frame.GetString() == " ")
+						{
+							frame.GetSprite().setTexture(frame_wrong);
+							state = GameState::SET_NAMES;
+						}
+						else if (!wrong)
+							names.emplace_back(frame.GetString());
+					}
 				}
 				break;
 			}
@@ -454,9 +477,16 @@ void Game::SetNames()
 void Game::StartGame()
 {
 	bg.setTexture(game_board);
-	Pawn red(pawns_forGame[3], 0);
 	Dice LeftDice(dice, 800.0f, 100.0f);
 	Dice RightDice(dice, 850.0f, 100.0f);
+	vector<Pawn> pawns;
+	for (int i = 1; i <= GetPlayers(); ++i)
+		pawns.emplace_back(pawns_forGame[i - 1], 0);
+	vector<Player> player;
+	for (int i = 1; i <= GetPlayers(); ++i)
+	{
+		player.emplace_back(names[i - 1], pawns[i - 1], GetPlayers() );
+	}
 
 	vector<ButtonSprite> imgButtons;
 	imgButtons.emplace_back(button_orange, 910.0f, 105.0f);
@@ -499,26 +529,23 @@ void Game::StartGame()
 			}
 			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 			{
-				if (hoverImgButton)
+				if (hoverImgButton == &imgButtons[0])
 				{
-					if (hoverImgButton == &imgButtons[0])
-					{
-						int SumMesh = LeftDice.RollDice() + RightDice.RollDice();
-						if (SumMesh != 12)
-							red.move(SumMesh);
-						//else
-							//red.GoJail();
-					}
-						
+					int SumMesh = LeftDice.RollDice() + RightDice.RollDice();
+					if (SumMesh != 12)
+						player[0].GetPawn().move(SumMesh);
+					//else
+						//red.GoJail();
 				}
-				break;
+				//break;
 			}
 		}
 
 
 		window.clear();
 		window.draw(bg);
-		window.draw(red.GetSprite());
+		for (auto& pawn : player)
+			window.draw(pawn.GetPawn().GetSprite());
 		window.draw(LeftDice.GetSprite());
 		window.draw(RightDice.GetSprite());
 		window.draw(imgButtons[0].GetSprite());

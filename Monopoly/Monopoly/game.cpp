@@ -483,7 +483,8 @@ void Game::StartGame()
 	bg.setTexture(game_board);
 	Dice LeftDice(dice, 800.0f, 100.0f);
 	Dice RightDice(dice, 850.0f, 100.0f);
-	
+	Dice ChoosePlayer(dice, 0, GetPlayers() - 1, false);
+
 	vector<Pawn> pawns;
 	for (int i = 1; i <= GetPlayers(); ++i)
 		pawns.emplace_back(pawns_forGame[i - 1], 0);
@@ -492,7 +493,8 @@ void Game::StartGame()
 	{
 		player.emplace_back(names[i - 1], pawns[i - 1], GetPlayers() );
 	}
-	player[0].SetActiveMovement(true);
+	player[ChoosePlayer.RollDice()].SetActiveMovement(true);
+
 	vector<ButtonSprite> imgButtons;
 	imgButtons.emplace_back(button_orange, 910.0f, 105.0f);
 
@@ -556,8 +558,8 @@ void Game::StartGame()
 					{
 						activePlayer->GetPawn().move(SumMesh);
 						activePlayer->SetActiveMovement(false);
-						if (activePlayer->GetString() != player[1].GetString()) // BEZ SENSU!!
-							(activePlayer + 1)->SetActiveMovement(true);
+						if (activePlayer != &player[GetPlayers() - 1])
+							(activePlayer + 1)->SetActiveMovement(true); 
 						else
 							player[0].SetActiveMovement(true);
 					}

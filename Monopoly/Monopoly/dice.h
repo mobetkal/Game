@@ -5,21 +5,33 @@ class Dice
 {
 	std::random_device random;
 	std::vector<sf::Texture> meshNumbers;
+	int beginValue, endValue;
+	bool visible;
 	sf::Sprite dice;
 public:
-	Dice(std::vector<sf::Texture>& meshNumbers, float x, float y)
+	Dice(std::vector<sf::Texture>& meshNumbers, float x, float y, int beginValue = 1, int endValue = 6, bool visible = true)
 		:
-		meshNumbers(meshNumbers)
+		meshNumbers(meshNumbers),
+		beginValue(beginValue),
+		endValue(endValue),
+		visible(visible)
 	{
 		dice.setTexture(SetTexture(RollDice()));
 		dice.setPosition(x, y);
 	};
+	Dice(int beginValue, int endValue, bool visible = false)
+		:
+		beginValue(beginValue),
+		endValue(endValue),
+		visible(visible)
+	{};
 	int RollDice()
 	{
 		std::default_random_engine engine(random());
-		std::uniform_int_distribution<int> uniform_dist(1, 6);
+		std::uniform_int_distribution<int> uniform_dist(beginValue, endValue);
 		int meshNumber = uniform_dist(engine);
-		dice.setTexture(SetTexture(meshNumber));
+		if (visible)
+			dice.setTexture(SetTexture(meshNumber));
 		return meshNumber;
 	}
 	sf::Texture& SetTexture(int number)

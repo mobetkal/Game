@@ -70,7 +70,7 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 		return;
 
 	// Fonts
-	if ((!font.loadFromFile("font/font.ttf")) || (!font_menus.loadFromFile("font/kawoszeh.ttf")))
+	if ((!font.loadFromFile("font/palab.ttf")) || (!font_menus.loadFromFile("font/kawoszeh.ttf")))
 		return;
 	
 	state = GameState::MODE_MENU;
@@ -137,11 +137,12 @@ void Game::Rungame()
 void Game::ModeMenu()
 {
 	bg.setTexture(bg_monopoly_logo);
-	vector<ButtonText> buttons;
-	buttons.emplace_back(L"Wybierz tryb gry:", font_menus, 65, 300.0f, false);
-	buttons.emplace_back(L"Gra online", font_menus, 45, 400.0f, GameState::MAIN_MENU);
-	buttons.emplace_back(L"Gra offline", font_menus, 45, 470.0f, GameState::MAIN_MENU);
-	buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 540.0f, GameState::END);
+	vector<ButtonText> text_buttons;
+	text_buttons.emplace_back(L"Wybierz tryb gry:", font_menus, 65, 300.0f, false);
+	text_buttons.emplace_back(L"Gra online", font_menus, 45, 400.0f, GameState::MAIN_MENU);
+	text_buttons.emplace_back(L"Gra offline", font_menus, 45, 470.0f, GameState::MAIN_MENU);
+	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 540.0f, GameState::END);
+	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", font, 13, 789.0f, 283.0f, false);
 
 	ButtonText* hoverButton_text = nullptr;
 		
@@ -149,7 +150,7 @@ void Game::ModeMenu()
 	{
 		Vector2f mouse(Mouse::getPosition(window));
 		hoverButton_text = nullptr;
-		for (auto& button : buttons)
+		for (auto& button : text_buttons)
 		if (button.GetText().getGlobalBounds().contains(mouse) && button.MakeStyle())
 		{
 			button.GetText().setStyle(Text::Bold);
@@ -174,16 +175,16 @@ void Game::ModeMenu()
 			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverButton_text)
 			{
 				state = hoverButton_text->GetState(); 
-				if (hoverButton_text == &buttons[0])
+				if (hoverButton_text == &text_buttons[1])
 					SetGameMode(true);
-				if (hoverButton_text == &buttons[1])
+				if (hoverButton_text == &text_buttons[2])
 					SetGameMode(false);
 				break;
 			} 			
 		}
 		window.clear();
 		window.draw(bg);
-		for (auto &button : buttons)
+		for (auto &button : text_buttons)
 			window.draw(button.GetText());
 		window.display();
 	}
@@ -195,11 +196,12 @@ void Game::MainMenu()
 	bg.setTexture(bg_monopoly_logo);
 
 	vector<ButtonText> text_buttons;
-	if (!game_mode)
+	if (!GetGameMode())
 		text_buttons.emplace_back(L"Kontynuuj grę", font_menus, 45, 350.0f, GameState::END); // Dorobić CONTINUE
 	text_buttons.emplace_back(L"Nowa gra", font_menus, 45, 410.0f, GameState::PLAYERS_MENU);
 	text_buttons.emplace_back(L"Powrót", font_menus, 45, 470.0f, GameState::MODE_MENU);
 	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 530.0f, GameState::END);
+	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", font, 13, 789.0f, 283.0f, false);
 
 	ButtonText* hoverButton_text = nullptr;
 
@@ -256,6 +258,7 @@ void Game::PlayersMenu()
 	text_buttons.emplace_back(L"Wybierz liczbę graczy:", font_menus, 65, 300.0f, false);
 	text_buttons.emplace_back(L"Powrót", font_menus, 45, 550.0f, GameState::MAIN_MENU);
 	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 600.0f, GameState::END);
+	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", font, 13, 789.0f, 283.0f, false);
 
 	ButtonText* hoverButton_text = nullptr;
 
@@ -334,13 +337,13 @@ void Game::PlayersMenu()
 void Game::SetNames()
 {
 	bg.setTexture(bg_monopoly_logo);
-
+	
 	vector<Text> players;
 	vector<Frame> frames;
 	vector<Sprite> pawn;
 	for (int i = 1; i <= GetPlayers(); ++i)
 	{
-		players.emplace_back(L"Player " + to_string(i) + ":", font_menus, 40);
+		players.emplace_back(L"Gracz " + to_string(i) + ":", font_menus, 40);
 		players[i - 1].setPosition(290.0f, (float)(380 + (i - 1) * 55));
 		players[i - 1].setColor(Color::Black);
 		frames.emplace_back(make_pair(frame, frame_active), 445.0f, (float)(380 + (i - 1) * 55), "", font_menus, 30);
@@ -355,6 +358,7 @@ void Game::SetNames()
 	text_buttons.emplace_back(L"Powrót", font_menus, 45, 590.0f, GameState::PLAYERS_MENU);
 	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 635.0f, GameState::END);
 	text_buttons.emplace_back(L"GRAJ", font_menus, 50, 920, 565.0f, GameState::START_GAME);
+	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", font, 13, 789.0f, 283.0f, false);
 
 	ButtonText* hoverButton_text = nullptr;
 
@@ -479,6 +483,7 @@ void Game::StartGame()
 	bg.setTexture(game_board);
 	Dice LeftDice(dice, 800.0f, 100.0f);
 	Dice RightDice(dice, 850.0f, 100.0f);
+	
 	vector<Pawn> pawns;
 	for (int i = 1; i <= GetPlayers(); ++i)
 		pawns.emplace_back(pawns_forGame[i - 1], 0);
@@ -487,21 +492,27 @@ void Game::StartGame()
 	{
 		player.emplace_back(names[i - 1], pawns[i - 1], GetPlayers() );
 	}
-
+	player[0].SetActiveMovement(true);
 	vector<ButtonSprite> imgButtons;
 	imgButtons.emplace_back(button_orange, 910.0f, 105.0f);
 
 	vector<ButtonText> textButtons;
+	textButtons.emplace_back(L"Active Player", font_menus, 30, 835.0f, 5.0f, false);
+	textButtons.emplace_back(L"Czas na: ", font_menus, 30, 705.0f, 5.0f, false);
 	textButtons.emplace_back(L"Rzuć kostkami!", font_menus, 17, 927.0f, 113.0f);
+	textButtons.emplace_back(L"Copyright © 2016 by MARCIN OBETKAŁ PolSl Project", font, 10, 327.0f, 591.0f, false);
 
 	ButtonSprite* hoverImgButton = nullptr;
 	ButtonText* hoverTextButton = nullptr;
+
+	Player* activePlayer = nullptr;
 
 	while (state == GameState::START_GAME)
 	{
 		Vector2f mouse(Mouse::getPosition(window));
 		hoverImgButton = nullptr;
 		hoverTextButton = nullptr;
+		activePlayer = nullptr;
 
 		for (auto& button : imgButtons)
 		if (button.GetSprite().getGlobalBounds().contains(mouse))
@@ -509,7 +520,7 @@ void Game::StartGame()
 			hoverImgButton = &button;
 		}
 		for (auto& button : textButtons)
-		if (button.GetText().getGlobalBounds().contains(mouse))
+		if (button.GetText().getGlobalBounds().contains(mouse) && button.MakeStyle())
 		{
 			hoverTextButton = &button;
 			button.GetText().setStyle(Text::Underlined);
@@ -522,18 +533,34 @@ void Game::StartGame()
 		Event event;
 		while (window.pollEvent(event))
 		{
+			for (auto& active : player)
+			if (active.IsActive())
+			{
+				activePlayer = &active;
+				textButtons[0].SetString(activePlayer->GetString());
+			}
+				
+
 			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
 			{
 				state = GameState::END;
 				break;
 			}
+
 			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 			{
 				if (hoverImgButton == &imgButtons[0])
 				{
 					int SumMesh = LeftDice.RollDice() + RightDice.RollDice();
 					if (SumMesh != 12)
-						player[0].GetPawn().move(SumMesh);
+					{
+						activePlayer->GetPawn().move(SumMesh);
+						activePlayer->SetActiveMovement(false);
+						if (activePlayer->GetString() != player[1].GetString()) // BEZ SENSU!!
+							(activePlayer + 1)->SetActiveMovement(true);
+						else
+							player[0].SetActiveMovement(true);
+					}
 					//else
 						//red.GoJail();
 				}
@@ -548,7 +575,8 @@ void Game::StartGame()
 			window.draw(pawn.GetPawn().GetSprite());
 		window.draw(LeftDice.GetSprite());
 		window.draw(RightDice.GetSprite());
-		window.draw(imgButtons[0].GetSprite());
+		for (auto& button : textButtons)
+			window.draw(imgButtons[0].GetSprite());
 		for (auto& button : textButtons)
 			window.draw(button.GetText());
 		window.display();

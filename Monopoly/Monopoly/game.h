@@ -23,18 +23,7 @@ public:
 	bool GetGameMode() const;
 	void SetPlayers(int players);
 	int GetPlayers() const;
-	/*std::pair<Frame, Frame> ErrorCheck(std::vector<Frame> frame)
-	{
-		int frameSize = frame.size();
-		for (int i = 0; i < frameSize; ++i)
-		{
-			for (int j = i + 1; j < frameSize; ++j)
-			if (frame[i].GetString() == frame[j].GetString())
-				return std::make_pair(frame[i], frame[i]);
-		}
-		return;
-	}*/
-
+	
 	void Rungame();
 	void ModeMenu();
 	void MainMenu();

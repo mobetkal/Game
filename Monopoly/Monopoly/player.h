@@ -12,16 +12,30 @@ class Player
 	int blockMovement;
 
 public:
-	Player(const std::string& name, Pawn pawn, int players, bool activeMovement = false, bool jailCard = false)
+	Player(const std::string& name, Pawn pawn, bool activeMovement = false)
 		:
 		name(name),
 		pawn(pawn),
-		money((int)(2000 / players)),
-		jailCard(jailCard),
-		activeMovement(activeMovement)
+		money(1500),
+		jailCard(false),
+		activeMovement(activeMovement),
+		blockMovement(0)
 	{
 		
 	};
+	void operator--()
+	{
+		if (blockMovement)
+			blockMovement -= 1;
+	}
+	int IsBlocked()
+	{
+		return blockMovement;
+	}
+	void SetBlock(int rounds)
+	{
+		blockMovement = rounds;
+	}
 	Pawn& GetPawn()
 	{
 		return pawn;

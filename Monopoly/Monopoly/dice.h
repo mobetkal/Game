@@ -9,21 +9,21 @@ class Dice
 	bool visible;
 	sf::Sprite dice;
 public:
-	Dice(std::vector<sf::Texture>& meshNumbers, float x, float y, int beginValue = 1, int endValue = 6, bool visible = true)
+	Dice(std::vector<sf::Texture>& meshNumbers, float x, float y, int beginValue = 1, int endValue = 6)
 		:
 		meshNumbers(meshNumbers),
 		beginValue(beginValue),
 		endValue(endValue),
-		visible(visible)
+		visible(true)
 	{
 		dice.setTexture(SetTexture(RollDice()));
 		dice.setPosition(x, y);
 	};
-	Dice(int beginValue, int endValue, bool visible = false)
+	Dice(int beginValue, int endValue)
 		:
 		beginValue(beginValue),
 		endValue(endValue),
-		visible(visible)
+		visible(false)
 	{};
 	int RollDice()
 	{

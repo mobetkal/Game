@@ -450,7 +450,7 @@ void Game::SetNames()
 							frame.TurnActive(false);
 							frame.GetSprite().setTexture(frame.GetTexture().first);
 						}
-						else if (event.text.unicode > 31 && event.text.unicode < 123 && frame.GetString().size() < 15)
+						else if (event.text.unicode > 31 && event.text.unicode < 123 && frame.GetString().size() < 14)
 						{
 							frame.GetString().push_back((char)event.text.unicode);
 							frame.SetText(frame.GetString());
@@ -483,24 +483,23 @@ void Game::StartGame()
 	bg.setTexture(game_board);
 	Dice LeftDice(dice, 800.0f, 100.0f);
 	Dice RightDice(dice, 850.0f, 100.0f);
-	Dice ChoosePlayer(dice, 0, GetPlayers() - 1, false);
+	Dice ChoosePlayer(1, GetPlayers());
 
 	vector<Pawn> pawns;
 	for (int i = 1; i <= GetPlayers(); ++i)
 		pawns.emplace_back(pawns_forGame[i - 1], 0);
 	vector<Player> player;
 	for (int i = 1; i <= GetPlayers(); ++i)
-	{
-		player.emplace_back(names[i - 1], pawns[i - 1], GetPlayers() );
-	}
-	player[ChoosePlayer.RollDice()].SetActiveMovement(true);
-
+		player.emplace_back(names[i - 1], pawns[i - 1]);
+	player[2].SetActiveMovement(true);//ChoosePlayer.RollDice() - 1
+	player[1].SetBlock(2);
 	vector<ButtonSprite> imgButtons;
 	imgButtons.emplace_back(button_orange, 910.0f, 105.0f);
 
 	vector<ButtonText> textButtons;
-	textButtons.emplace_back(L"Active Player", font_menus, 30, 835.0f, 5.0f, false);
-	textButtons.emplace_back(L"Czas na: ", font_menus, 30, 705.0f, 5.0f, false);
+	textButtons.emplace_back(L"Aktywny Gracz", font_menus, 28, 850.0f, 5.0f, false);
+	textButtons.emplace_back(L"Instrukcje:\nBrak...", font_menus, 21, 705.0f, 600.0f, false);
+	textButtons.emplace_back(L"Twój ruch: ", font_menus, 28, 705.0f, 5.0f, false);
 	textButtons.emplace_back(L"Rzuć kostkami!", font_menus, 17, 927.0f, 113.0f);
 	textButtons.emplace_back(L"Copyright © 2016 by MARCIN OBETKAŁ PolSl Project", font, 10, 327.0f, 591.0f, false);
 
@@ -532,45 +531,73 @@ void Game::StartGame()
 			button.GetText().setStyle(Text::Regular);
 		}
 		
+		for (auto& active : player)
+		if (active.IsActive())
+		{
+			activePlayer = &active;
+			textButtons[0].GetText().setString(activePlayer->GetString());
+			if (active.IsBlocked())
+				textButtons[1].GetText().setString(L"Instrukcje:\nJesteś zablokowany, rzuć kostkami!\nDwa dublety wypuszczą Cię z więzienia!");
+			else
+				textButtons[1].GetText().setString(L"Instrukcje:\nBrak...");
+		}
+		
 		Event event;
 		while (window.pollEvent(event))
 		{
-			for (auto& active : player)
-			if (active.IsActive())
-			{
-				activePlayer = &active;
-				textButtons[0].SetString(activePlayer->GetString());
-			}
-				
 
 			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
 			{
 				state = GameState::END;
 				break;
 			}
-
-			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
+			
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverImgButton == &imgButtons[0])
 			{
-				if (hoverImgButton == &imgButtons[0])
-				{
-					int SumMesh = LeftDice.RollDice() + RightDice.RollDice();
-					if (SumMesh != 12)
+				int firstRollDice = LeftDice.RollDice();
+				int secondRollDice = RightDice.RollDice();	
+				if (!activePlayer->IsBlocked())
+				{	
+					activePlayer->GetPawn().move(firstRollDice + secondRollDice);
+					//ZARZĄDZANIE POLEM
+					if (firstRollDice == secondRollDice)
 					{
-						activePlayer->GetPawn().move(SumMesh);
-						activePlayer->SetActiveMovement(false);
-						if (activePlayer != &player[GetPlayers() - 1])
-							(activePlayer + 1)->SetActiveMovement(true); 
+						firstRollDice = LeftDice.RollDice();
+						secondRollDice = RightDice.RollDice();
+						if (firstRollDice != secondRollDice)
+						{
+							activePlayer->GetPawn().move(firstRollDice + secondRollDice);
+							//ZARZĄDZANIE POLEM
+						}
 						else
-							player[0].SetActiveMovement(true);
+						{
+							activePlayer->SetBlock(2);
+							//WYRZUCENIE NA POLE JAIL
+						}
 					}
-					//else
-						//red.GoJail();
 				}
-				//break;
+				else
+				{
+					if (firstRollDice == secondRollDice)
+					{
+						firstRollDice = LeftDice.RollDice();
+						secondRollDice = RightDice.RollDice();
+						if (firstRollDice == secondRollDice)
+						{
+							activePlayer->GetPawn().move(firstRollDice + secondRollDice);
+							activePlayer->SetBlock(0);
+						}
+					}
+					--(*activePlayer);
+				}
+				activePlayer->SetActiveMovement(false);
+				if (activePlayer != &player[GetPlayers() - 1])
+					(activePlayer + 1)->SetActiveMovement(true);
+				else
+					player[0].SetActiveMovement(true);
 			}
 		}
-
-
+		
 		window.clear();
 		window.draw(bg);
 		for (auto& pawn : player)

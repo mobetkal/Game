@@ -54,8 +54,4 @@ public:
 	{
 		return SetStyle;
 	}
-	void SetString(std::string newString)
-	{
-		button_text.setString(newString);
-	}
 };

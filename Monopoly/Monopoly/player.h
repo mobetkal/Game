@@ -9,6 +9,7 @@ class Player
 	int money;
 	bool jailCard;
 	bool activeMovement;
+	bool doublet;
 	int blockMovement;
 
 public:
@@ -35,6 +36,14 @@ public:
 	void SetBlock(int rounds)
 	{
 		blockMovement = rounds;
+	}
+	bool ThrewDoublet()
+	{
+		return doublet;
+	}
+	void SetDoublet(bool doublet)
+	{
+		this->doublet = doublet;
 	}
 	Pawn& GetPawn()
 	{

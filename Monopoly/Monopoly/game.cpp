@@ -1,11 +1,12 @@
 ﻿#include <iostream>
 #include <SFML/Graphics.hpp>
-#include "game.h"
-#include "buttonsprite.h"
-#include "buttontext.h"
+#include <SFML/OpenGL.hpp>
 #include <fstream>
 #include <Windows.h>
 #include <vector>
+#include "game.h"
+#include "buttonsprite.h"
+#include "buttontext.h"
 #include "frame.h"
 #include "pawn.h"
 #include "dice.h"
@@ -20,6 +21,8 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 	window.setPosition(Vector2i(100, 10));
 	window.setKeyRepeatEnabled(true);
 	window.setIcon(MonopolyIcon.width, MonopolyIcon.height, MonopolyIcon.pixel_data);
+	window.setVerticalSyncEnabled(true);
+	window.setFramerateLimit(60);
 
 	state = GameState::END;
 
@@ -489,14 +492,12 @@ void Game::StartGame()
 	for (int i = 1; i <= GetPlayers(); ++i)
 	{
 		pawns.emplace_back(pawns_forGame[i - 1], i, 0);
-		pawns[i - 1].GoJail();
 	}
 		
 	vector<Player> player;
 	for (int i = 1; i <= GetPlayers(); ++i)
 		player.emplace_back(names[i - 1], pawns[i - 1]);
-	player[2].SetActiveMovement(true);//ChoosePlayer.RollDice() - 1
-	//player[1].SetBlock(2);
+	player[ChoosePlayer.RollDice() - 1].SetActiveMovement(true);
 	vector<ButtonSprite> imgButtons;
 	imgButtons.emplace_back(button_orange, 910.0f, 105.0f);
 

@@ -487,12 +487,16 @@ void Game::StartGame()
 
 	vector<Pawn> pawns;
 	for (int i = 1; i <= GetPlayers(); ++i)
-		pawns.emplace_back(pawns_forGame[i - 1], 0);
+	{
+		pawns.emplace_back(pawns_forGame[i - 1], i, 0);
+		pawns[i - 1].GoJail();
+	}
+		
 	vector<Player> player;
 	for (int i = 1; i <= GetPlayers(); ++i)
 		player.emplace_back(names[i - 1], pawns[i - 1]);
 	player[2].SetActiveMovement(true);//ChoosePlayer.RollDice() - 1
-	player[1].SetBlock(2);
+	//player[1].SetBlock(2);
 	vector<ButtonSprite> imgButtons;
 	imgButtons.emplace_back(button_orange, 910.0f, 105.0f);
 
@@ -572,7 +576,7 @@ void Game::StartGame()
 						else
 						{
 							activePlayer->SetBlock(2);
-							//WYRZUCENIE NA POLE JAIL
+							activePlayer->GetPawn().GoJail();
 						}
 					}
 				}
@@ -584,8 +588,10 @@ void Game::StartGame()
 						secondRollDice = RightDice.RollDice();
 						if (firstRollDice == secondRollDice)
 						{
+							activePlayer->GetPawn().SetArea(10);
 							activePlayer->GetPawn().move(firstRollDice + secondRollDice);
 							activePlayer->SetBlock(0);
+							//ZARZĄDZANIE POLEM
 						}
 					}
 					--(*activePlayer);

@@ -7,22 +7,45 @@
 class Pawn
 {
 	sf::Texture texturePawn;
+	enum class Color {BLUE = 1, YELLOW, GREEN, RED};
+	Color color;
 	sf::Sprite pawn;
 	std::vector<std::pair<float, float>> possition;
 	int area;
 public:
-	Pawn(sf::Texture& texturePawn, int area = 0)
+	Pawn(sf::Texture& texturePawn, unsigned int color, int area = 0)
 		: 
 		texturePawn(texturePawn),
 		area(area)
 	{
+		this->color = SetColorPawn(color);
 		texturePawn.setSmooth(true);
 		pawn.setTexture(texturePawn);
 		LoadPossitons();
 		pawn.setPosition(possition[area].first, possition[area].second);
 	};
+	Color SetColorPawn(unsigned int color)
+	{
+		if (color == 1)
+			return Color::BLUE;
+		if (color == 2)
+			return Color::YELLOW;
+		if (color == 3)
+			return Color::GREEN;
+		if (color == 4)
+			return Color::RED;
+	}
 	void LoadPossitons()
 	{
+		std::pair<float, float> jailArea;
+		if (color == Color::BLUE)
+			jailArea = std::make_pair(35.0f, 667.0f);
+		if (color == Color::YELLOW)
+			jailArea = std::make_pair(32.0f, 638.5f);
+		if (color == Color::GREEN)
+			jailArea = std::make_pair(-19.0f, 615.0f);
+		if (color == Color::RED)
+			jailArea = std::make_pair(8.0f, 613.0f);
 		possition.emplace_back(std::make_pair(620.0f, 620.0f)); //START
 		possition.emplace_back(std::make_pair(550.5f, 633.0f));
 		possition.emplace_back(std::make_pair(494.0f, 633.0f));
@@ -33,7 +56,7 @@ public:
 		possition.emplace_back(std::make_pair(211.0f, 633.0f));
 		possition.emplace_back(std::make_pair(154.0f, 633.0f));
 		possition.emplace_back(std::make_pair(97.0f, 633.0f));
-		possition.emplace_back(std::make_pair(154.0f, 633.0f)); // LEFT BOTTOM SITE -> JAIL => Dodaj Mnie! :P
+		possition.emplace_back(jailArea); // LEFT BOTTOM SITE -> JAIL => Dodaj Mnie! :P
 		possition.emplace_back(std::make_pair(15.0f, 551.0f));
 		possition.emplace_back(std::make_pair(15.0f, 494.0f));
 		possition.emplace_back(std::make_pair(15.0f, 437.0f));
@@ -68,17 +91,17 @@ public:
 	{
 		return pawn;
 	}
-	sf::Texture& GetTexture()
+	void SetArea(int newArea)
 	{
-		return texturePawn;
-	}
-	std::pair<float, float>& GetPossition(int area)
-	{
-		return possition[area];
+		area = newArea;
 	}
 	int GetArea()
 	{
 		return area;
+	}
+	void GoJail()
+	{
+		pawn.setPosition(40.0f, 609.0f);
 	}
 	void move(int meshNumber)
 	{

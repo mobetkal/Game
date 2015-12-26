@@ -69,7 +69,7 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 		dice[i].setSmooth(true);
 		Game::dice.emplace_back(dice[i]);
 	}
-	if ((!button_orange.loadFromFile("graphics/button_orange.png")))
+	if ((!button_enable.loadFromFile("graphics/button_enable.png")) || (!button_disable.loadFromFile("graphics/button_disable.png")))
 		return;
 
 	// Fonts
@@ -484,8 +484,8 @@ void Game::SetNames()
 void Game::StartGame()
 {
 	bg.setTexture(game_board);
-	Dice LeftDice(dice, 800.0f, 100.0f);
-	Dice RightDice(dice, 850.0f, 100.0f);
+	Dice LeftDice(dice, 810.0f, 50.0f);
+	Dice RightDice(dice, 865.0f, 50.0f);
 	Dice ChoosePlayer(1, GetPlayers());
 
 	vector<Pawn> pawns;
@@ -497,15 +497,26 @@ void Game::StartGame()
 	vector<Player> player;
 	for (int i = 1; i <= GetPlayers(); ++i)
 		player.emplace_back(names[i - 1], pawns[i - 1]);
-	player[ChoosePlayer.RollDice() - 1].SetActiveMovement(true);
+	int firstPlayer = ChoosePlayer.RollDice() - 1;
+	player[firstPlayer].SetActive(true);
+	player[firstPlayer].SetActiveMovement(true);
+
 	vector<ButtonSprite> imgButtons;
-	imgButtons.emplace_back(button_orange, 910.0f, 105.0f);
+	imgButtons.emplace_back(button_enable, 936.0f, 55.0f);
+	imgButtons.emplace_back(button_enable, 936.0f, 540.0f);
 
 	vector<ButtonText> textButtons;
-	textButtons.emplace_back(L"Aktywny Gracz", font_menus, 28, 850.0f, 5.0f, false);
-	textButtons.emplace_back(L"Instrukcje:\nBrak...", font_menus, 21, 705.0f, 600.0f, false);
-	textButtons.emplace_back(L"Twój ruch: ", font_menus, 28, 705.0f, 5.0f, false);
-	textButtons.emplace_back(L"Rzuć kostkami!", font_menus, 17, 927.0f, 113.0f);
+	textButtons.emplace_back(L"Aktywny Gracz", font_menus, 28, 840.0f, 5.0f, false);
+	textButtons.emplace_back(L"Brak...", font_menus, 21, 705.0f, 606.0f, false);
+	textButtons.emplace_back(L"99999", font_menus, 24, 835.0f, 103.0f, false);
+	textButtons.emplace_back(L"Powiadomienia dodatkowe:", font_menus, 21, 705.0f, 580.0f, false);
+	textButtons.emplace_back(L"Twój ruch:", font_menus, 28, 705.0f, 5.0f, false);
+	textButtons.emplace_back(L"Stan konta:", font_menus, 24, 705.0f, 103.0f, false);
+	textButtons.emplace_back(L"Rzuć kostkami!", font_menus, 17, 953.0f, 63.0f, false);
+	textButtons.emplace_back(L"----------------------------------------------------------------", font_menus, 21, 705.0f, 93.0f, false);
+	textButtons.emplace_back(L"----------------------------", font_menus, 21, 924.0f, 568.0f, false);
+	textButtons.emplace_back(L"-----------------------------------------------------------------", font_menus, 21, 702.0f, 593.0f, false);
+	textButtons.emplace_back(L"Następny gracz!", font_menus, 17, 945.0f, 548.0f, false);
 	textButtons.emplace_back(L"Copyright © 2016 by MARCIN OBETKAŁ PolSl Project", font, 10, 327.0f, 591.0f, false);
 
 	ButtonSprite* hoverImgButton = nullptr;
@@ -520,11 +531,20 @@ void Game::StartGame()
 		hoverTextButton = nullptr;
 		activePlayer = nullptr;
 
+		for (auto& active : player)
+		if (active.IsActive())
+		{
+			activePlayer = &active;
+			textButtons[0].GetText().setString(activePlayer->GetString());
+			textButtons[2].GetText().setString(to_string(activePlayer->AccoundStatus()) + L" zł");
+		}
+
 		for (auto& button : imgButtons)
 		if (button.GetSprite().getGlobalBounds().contains(mouse))
 		{
 			hoverImgButton = &button;
 		}
+
 		for (auto& button : textButtons)
 		if (button.GetText().getGlobalBounds().contains(mouse) && button.MakeStyle())
 		{
@@ -536,17 +556,17 @@ void Game::StartGame()
 			button.GetText().setStyle(Text::Regular);
 		}
 		
-		for (auto& active : player)
-		if (active.IsActive())
+		if (activePlayer->IsActiveMovement())
 		{
-			activePlayer = &active;
-			textButtons[0].GetText().setString(activePlayer->GetString());
-			if (active.IsBlocked())
-				textButtons[1].GetText().setString(L"Instrukcje:\nJesteś zablokowany, rzuć kostkami!\nDwa dublety wypuszczą Cię z więzienia!");
-			else
-				textButtons[1].GetText().setString(L"Instrukcje:\nBrak...");
+			imgButtons[0].GetSprite().setTexture(button_enable);
+			imgButtons[1].GetSprite().setTexture(button_disable);
 		}
-		
+		else
+		{
+			imgButtons[0].GetSprite().setTexture(button_disable);
+			imgButtons[1].GetSprite().setTexture(button_enable);
+		}
+
 		Event event;
 		while (window.pollEvent(event))
 		{
@@ -557,62 +577,103 @@ void Game::StartGame()
 				break;
 			}
 			
-			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverImgButton == &imgButtons[0])
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverImgButton == &imgButtons[0] && !activePlayer->ThrewDoublet() && activePlayer->IsActiveMovement())
 			{
 				int firstRollDice = LeftDice.RollDice();
 				int secondRollDice = RightDice.RollDice();	
 				if (!activePlayer->IsBlocked())
 				{	
-					activePlayer->GetPawn().move(firstRollDice + secondRollDice);
+					if (activePlayer->GetPawn().move(firstRollDice + secondRollDice))
+						activePlayer->Money(200);
 					//ZARZĄDZANIE POLEM
 					if (firstRollDice == secondRollDice)
 					{
-						firstRollDice = LeftDice.RollDice();
-						secondRollDice = RightDice.RollDice();
-						if (firstRollDice != secondRollDice)
-						{
-							activePlayer->GetPawn().move(firstRollDice + secondRollDice);
-							//ZARZĄDZANIE POLEM
-						}
-						else
-						{
-							activePlayer->SetBlock(2);
-							activePlayer->GetPawn().GoJail();
-						}
+						activePlayer->SetDoublet(true);
+						textButtons[1].GetText().setString(L"Wyrzuciłeś dublet!\nRzuć kostkami jeszcze raz!");
+					}
+					else
+						activePlayer->SetActiveMovement(false);
+				}
+				else
+				{
+					if (firstRollDice == secondRollDice)
+					{
+						activePlayer->SetDoublet(true);
+						textButtons[1].GetText().setString(L"Wyrzuciłeś dublet!\nRzuć kostkami jeszcze raz!");
+					}
+					else
+					{
+						textButtons[1].GetText().setString(L"Nie udało się wyrzucić dubletu!\nOddaj ruch kolejnemu graczowi!");
+						activePlayer->SetActiveMovement(false);
+					}
+					--(*activePlayer);
+				}
+				hoverImgButton = nullptr;
+			}
+
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverImgButton == &imgButtons[0] && activePlayer->ThrewDoublet() && activePlayer->IsActiveMovement())
+			{
+				int firstRollDice = LeftDice.RollDice();
+				int secondRollDice = RightDice.RollDice();
+				if (!activePlayer->IsBlocked())
+				{
+					if (firstRollDice != secondRollDice)
+					{
+						textButtons[1].GetText().setString(L"Brak...");
+						if (activePlayer->GetPawn().move(firstRollDice + secondRollDice))
+							activePlayer->Money(200);
+						//ZARZĄDZANIE POLEM
+					}
+					else
+					{
+						activePlayer->SetBlock(2);
+						activePlayer->GetPawn().GoJail();
+						textButtons[1].GetText().setString(L"Wyrzuciłeś drugi dublet!\nTrafiasz do więzienia!");
 					}
 				}
 				else
 				{
 					if (firstRollDice == secondRollDice)
 					{
-						firstRollDice = LeftDice.RollDice();
-						secondRollDice = RightDice.RollDice();
-						if (firstRollDice == secondRollDice)
-						{
-							activePlayer->GetPawn().SetArea(10);
-							activePlayer->GetPawn().move(firstRollDice + secondRollDice);
-							activePlayer->SetBlock(0);
-							//ZARZĄDZANIE POLEM
-						}
+						textButtons[1].GetText().setString(L"Wyrzuciłeś drugi dublet!\nWychodzisz z więzienia!");
+						activePlayer->GetPawn().SetArea(10);
+						if (activePlayer->GetPawn().move(firstRollDice + secondRollDice))
+							activePlayer->Money(200);
+						activePlayer->SetBlock(0);
+						//ZARZĄDZANIE POLEM
 					}
-					--(*activePlayer);
 				}
+				activePlayer->SetDoublet(false);
 				activePlayer->SetActiveMovement(false);
+			}
+
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverImgButton == &imgButtons[1] && !activePlayer->IsActiveMovement())
+			{
+				activePlayer->SetActive(false);
+				textButtons[1].GetText().setString(L"Brak...");
 				if (activePlayer != &player[GetPlayers() - 1])
+				{
+					(activePlayer + 1)->SetActive(true);
 					(activePlayer + 1)->SetActiveMovement(true);
+				}	
 				else
+				{
+					player[0].SetActive(true);
 					player[0].SetActiveMovement(true);
+				}
+				for (auto& active : player)
+				if (active.IsActive() && active.IsBlocked())
+						textButtons[1].GetText().setString(L"Jesteś zablokowany, rzuć kostkami!\nDwa dublety wypuszczą Cię z więzienia!");
 			}
 		}
-		
 		window.clear();
 		window.draw(bg);
 		for (auto& pawn : player)
 			window.draw(pawn.GetPawn().GetSprite());
 		window.draw(LeftDice.GetSprite());
 		window.draw(RightDice.GetSprite());
-		for (auto& button : textButtons)
-			window.draw(imgButtons[0].GetSprite());
+		for (auto& button : imgButtons)
+			window.draw(button.GetSprite());
 		for (auto& button : textButtons)
 			window.draw(button.GetText());
 		window.display();

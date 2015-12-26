@@ -9,17 +9,20 @@ class Player
 	int money;
 	bool jailCard;
 	bool activeMovement;
+	bool active;
 	bool doublet;
 	int blockMovement;
 
 public:
-	Player(const std::string& name, Pawn pawn, bool activeMovement = false)
+	Player(const std::string& name, Pawn pawn)
 		:
 		name(name),
 		pawn(pawn),
 		money(1500),
 		jailCard(false),
-		activeMovement(activeMovement),
+		doublet(false),
+		activeMovement(false),
+		active(false),
 		blockMovement(0)
 	{
 		
@@ -37,6 +40,21 @@ public:
 	{
 		blockMovement = rounds;
 	}
+	bool Money(int value, bool use = true)
+	{
+		if ((money + value) >= 0)
+		{
+			if (use)
+				money += value;
+			return true;
+		}
+		else
+			return false;
+	}
+	int AccoundStatus()
+	{
+		return money;
+	}
 	bool ThrewDoublet()
 	{
 		return doublet;
@@ -53,9 +71,17 @@ public:
 	{
 		activeMovement = move;
 	}
-	bool IsActive()
+	bool IsActiveMovement()
 	{
 		return activeMovement;
+	}
+	void SetActive(bool active)
+	{
+		this->active = active;
+	}
+	bool IsActive()
+	{
+		return active;
 	}
 	std::string GetString() const
 	{

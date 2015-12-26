@@ -103,7 +103,7 @@ public:
 	{
 		pawn.setPosition(40.0f, 609.0f);
 	}
-	void move(int meshNumber)
+	bool move(int meshNumber)
 	{
 		for (int i = 1; i <= meshNumber; ++i)
 		{
@@ -116,11 +116,10 @@ public:
 					pawn.setPosition(possition[j].first, possition[j].second);
 					area = j;
 				}
-				//DODANIE KASY
-				return;
+				return true; // Add money
 			}
 		}
-		Sleep(500);
 		area = area + meshNumber;
+		return false;
 	}
 };

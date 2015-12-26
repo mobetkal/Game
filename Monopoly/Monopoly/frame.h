@@ -23,32 +23,11 @@ public:
 		this->text.setPosition(x + 18, y + 5);
 		this->text.setColor(sf::Color::Black);
 	}
-	std::pair<sf::Texture, sf::Texture>& GetTexture()
-	{
-		return texture;
-	}
-	std::string& GetString()
-	{
-		return name;
-	}
-	sf::Text& GetText()
-	{
-		return text;
-	}
-	sf::Sprite& GetSprite()
-	{
-		return frame;
-	}
-	void SetText(std::string name)
-	{
-		this->text.setString(name);
-	}
-	bool IsActive() const
-	{
-		return active;
-	}
-	void TurnActive(bool set)
-	{
-		active = set;
-	}
+	std::pair<sf::Texture, sf::Texture>& GetTexture() { return texture; }
+	std::string& GetString() { return name; }
+	sf::Text& GetText() { return text; }
+	sf::Sprite& GetSprite() { return frame; }
+	void SetText(std::string name) { this->text.setString(name); }
+	bool IsActive() const { return active; }
+	void TurnActive(bool set) { active = set; }
 };

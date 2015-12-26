@@ -24,6 +24,10 @@ public:
 		LoadPossitons();
 		pawn.setPosition(possition[area].first, possition[area].second);
 	};
+	sf::Sprite& GetSprite()	{ return pawn; }
+	void SetArea(int newArea) { area = newArea; }
+	int GetArea() { return area; }
+	void GoJail() { pawn.setPosition(40.0f, 609.0f); }
 	Color SetColorPawn(unsigned int color)
 	{
 		if (color == 1)
@@ -87,22 +91,7 @@ public:
 		possition.emplace_back(std::make_pair(633.0f, 494.0f));
 		possition.emplace_back(std::make_pair(633.0f, 551.0f)); 
 	}
-	sf::Sprite& GetSprite()
-	{
-		return pawn;
-	}
-	void SetArea(int newArea)
-	{
-		area = newArea;
-	}
-	int GetArea()
-	{
-		return area;
-	}
-	void GoJail()
-	{
-		pawn.setPosition(40.0f, 609.0f);
-	}
+	
 	bool move(int meshNumber)
 	{
 		for (int i = 1; i <= meshNumber; ++i)

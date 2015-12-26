@@ -32,14 +32,6 @@ public:
 		if (blockMovement)
 			blockMovement -= 1;
 	}
-	int IsBlocked()
-	{
-		return blockMovement;
-	}
-	void SetBlock(int rounds)
-	{
-		blockMovement = rounds;
-	}
 	bool Money(int value, bool use = true)
 	{
 		if ((money + value) >= 0)
@@ -51,40 +43,15 @@ public:
 		else
 			return false;
 	}
-	int AccoundStatus()
-	{
-		return money;
-	}
-	bool ThrewDoublet()
-	{
-		return doublet;
-	}
-	void SetDoublet(bool doublet)
-	{
-		this->doublet = doublet;
-	}
-	Pawn& GetPawn()
-	{
-		return pawn;
-	}
-	void SetActiveMovement(bool move)
-	{
-		activeMovement = move;
-	}
-	bool IsActiveMovement()
-	{
-		return activeMovement;
-	}
-	void SetActive(bool active)
-	{
-		this->active = active;
-	}
-	bool IsActive()
-	{
-		return active;
-	}
-	std::string GetString() const
-	{
-		return name;
-	}
+	int IsBlocked()	{ return blockMovement; }
+	void SetBlock(int rounds) { blockMovement = rounds; }
+	int AccoundStatus()	{ return money;	}
+	bool ThrewDoublet() { return doublet; }
+	void SetDoublet(bool doublet) { this->doublet = doublet; }
+	Pawn& GetPawn()	{ return pawn; }
+	void SetActiveMovement(bool move) {	activeMovement = move; }
+	bool IsActiveMovement()	{ return activeMovement; }
+	void SetActive(bool active) { this->active = active; }
+	bool IsActive() { return active; }
+	std::string GetString() const { return name; }
 };

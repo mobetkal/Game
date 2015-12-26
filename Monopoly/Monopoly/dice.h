@@ -39,8 +39,5 @@ public:
 		meshNumbers[number - 1].setSmooth(true);
 		return meshNumbers[number - 1];
 	}
-	sf::Sprite& GetSprite()
-	{
-		return dice;
-	}
+	sf::Sprite& GetSprite(){ return dice; }
 };

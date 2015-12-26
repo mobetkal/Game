@@ -29,16 +29,7 @@ public:
 		button_sprite.setPosition(x, y);
 		button_sprite.setTexture(texture);
 	}
-	std::pair<sf::Texture, sf::Texture>& GetTexture()
-	{
-		return pair_texture;
-	}
-	sf::Sprite& GetSprite()
-	{
-		return button_sprite;
-	}
-	GameState GetState() const
-	{
-		return state;
-	}
+	std::pair<sf::Texture, sf::Texture>& GetTexture() { return pair_texture; }
+	sf::Sprite& GetSprite() { return button_sprite; }
+	GameState GetState() const { return state; }
 };

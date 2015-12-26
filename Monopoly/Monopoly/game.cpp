@@ -28,11 +28,11 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 
 	if ((!bg_monopoly_logo.loadFromFile("graphics/bg_monopoly_logo.png")) || (!game_board.loadFromFile("graphics/game_board.png")))
 		return;
-	if ((!two_players.loadFromFile("graphics/two_players.png")) || (!two_players2.loadFromFile("graphics/two_players2.png")))
+	if ((!two_players.loadFromFile("graphics/pawn/two_players.png")) || (!two_players2.loadFromFile("graphics/pawn/two_players_hover.png")))
 		return;
-	if ((!three_players.loadFromFile("graphics/three_players.png")) || (!three_players2.loadFromFile("graphics/three_players2.png")))
+	if ((!three_players.loadFromFile("graphics/pawn/three_players.png")) || (!three_players2.loadFromFile("graphics/pawn/three_players_hover.png")))
 		return;
-	if ((!four_players.loadFromFile("graphics/four_players.png")) || (!four_players2.loadFromFile("graphics/four_players2.png")))
+	if ((!four_players.loadFromFile("graphics/pawn/four_players.png")) || (!four_players2.loadFromFile("graphics/pawn/four_players_hover.png")))
 		return;
 	if ((!frame.loadFromFile("graphics/frame.png")) || (!frame_active.loadFromFile("graphics/frame_active.png")) || (!frame_wrong.loadFromFile("graphics/frame_wrong.png")))
 		return;
@@ -80,25 +80,10 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 	//state = GameState::START_GAME;
 }
 
-void Game::SetGameMode(bool result)
-{
-	game_mode = result;
-}
-
-bool Game::GetGameMode() const
-{
-	return game_mode;
-}
-
-void Game::SetPlayers(int players)
-{
-	this->players = players;
-}
-
-int Game::GetPlayers() const
-{
-	return players;
-}
+void Game::SetGameMode(bool result) { game_mode = result; }
+bool Game::GetGameMode() const { return game_mode; }
+void Game::SetPlayers(int players) { this->players = players; }
+int Game::GetPlayers() const { return players; }
 
 void Game::Rungame()
 {

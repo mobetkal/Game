@@ -42,16 +42,7 @@ public:
 		button_text.setPosition((1100 / 2 - button_text.getGlobalBounds().width / 2), y);
 		button_text.setColor(sf::Color::Black);
 	}
-	sf::Text& GetText()
-	{
-		return button_text;
-	}
-	GameState GetState() const
-	{
-		return state;
-	}
-	bool MakeStyle()
-	{
-		return SetStyle;
-	}
+	sf::Text& GetText() { return button_text; }
+	GameState GetState() const { return state; }
+	bool MakeStyle() { return SetStyle; }
 };

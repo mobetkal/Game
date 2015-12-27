@@ -22,103 +22,149 @@
 
 using namespace std;
 
+class Rent
+{
+	friend class boost::serialization::access;
+	unsigned int withoutHouse;
+	unsigned int oneHouse;
+	unsigned int twoHouses;
+	unsigned int threeHouses;
+	unsigned int hotel;
+	template<class Archive>
+	void serialize(Archive & archive, const unsigned int){
+		archive & withoutHouse & oneHouse & twoHouses & threeHouses & hotel;
+	}
+
+public:
+	Rent(){}
+	Rent(const unsigned int& _woutH, const unsigned int& _oneH, const unsigned int& _twoH, const unsigned int& _threeH, const unsigned int& _H)
+		:
+		withoutHouse(_woutH),
+		oneHouse(_oneH),
+		twoHouses(_twoH),
+		threeHouses(_threeH),
+		hotel(_H)
+	{}
+};
+
 class Card
 {
 	friend class boost::serialization::access;
 	string title;
-	vector<int> rents;
-	int housePrice;
-	int hotelPrice;
-	int landPrice;
-	int deposit;
+	unsigned int landPrice;
+	unsigned int mortgage;
+	unsigned int ID_Card;
 
 	template<class Archive>
 	void serialize(Archive &archive, const unsigned int version)
 	{
-		archive & title & rents & landPrice & housePrice & hotelPrice & deposit;
+		archive & title & landPrice & mortgage & ID_Card;
 	}
-
-public:
-	Card(){}
-	Card(const string& title, int rent_0, int rent_1, int rent_2, int rent_3, int rent_4, int landPrice, int housePrice, int hotelPrice, int deposit)
+protected:
+	Card(const string& title, const unsigned int& landPrice, const unsigned int& mortgage, const unsigned int& ID_Card)
 		:
 		title(title),
 		landPrice(landPrice),
-		housePrice(housePrice),
-		hotelPrice(hotelPrice),
-		deposit(deposit)
+		mortgage(mortgage),
+		ID_Card(ID_Card)
+	{}
+public:
+	Card(){}
+	~Card(){}
+};
+
+class TrainCard : public Card
+{
+	friend class boost::serialization::access;
+	
+	template<class Archive>
+	void serialize(Archive &archive, const unsigned int version)
 	{
-		rents.emplace_back(rent_0);
-		rents.emplace_back(rent_1);
-		rents.emplace_back(rent_2);
-		rents.emplace_back(rent_3);
-		rents.emplace_back(rent_4);
+		archive & boost::serialization::base_object<Card>(*this);
 	}
+
+public:
+	TrainCard(){}
+	TrainCard(const string& title, unsigned int landPrice, unsigned int mortgage, unsigned int ID_Card)
+		:
+		Card(title, landPrice, mortgage, ID_Card)
+	{}
+};
+
+class SpecialCard : public Card
+{
+	friend class boost::serialization::access;
+
+	template<class Archive>
+	void serialize(Archive &archive, const unsigned int version)
+	{
+		archive & boost::serialization::base_object<Card>(*this);
+	}
+
+public:
+	SpecialCard(){}
+	SpecialCard(const string& title, unsigned int landPrice, unsigned int mortgage, unsigned int ID_Card)
+		:
+		Card(title, landPrice, mortgage, ID_Card)
+	{}
+};
+
+class DeedCard : public Card
+{
+	friend class boost::serialization::access;
+	Rent rents;
+	unsigned int housePrice;
+	unsigned int hotelPrice;
+
+	template<class Archive>
+	void serialize(Archive &archive, const unsigned int version)
+	{
+		archive & boost::serialization::base_object<Card>(*this);
+		archive & rents & housePrice & hotelPrice;
+	}
+
+public:
+	DeedCard(){}
+	DeedCard(const string& title, const Rent& rents, const unsigned int& landPrice, const unsigned int& housePrice, const unsigned int& hotelPrice, const unsigned int& mortgage, const unsigned int& ID_Card)
+		:
+		Card(title, landPrice, mortgage, ID_Card),
+		rents(rents),
+		housePrice(housePrice),
+		hotelPrice(hotelPrice)
+	{}
 };
 
 void Save(const Card &card, const char* filename){
-	std::ofstream ofs(filename, ios::binary);
+	std::ofstream ofs(filename, ios::app | ios::out);
 	boost::archive::text_oarchive bin_oa(ofs);
 	bin_oa << card;
 }
 
 void Restore(Card &card, const char* filename)
 {
-	std::ifstream ifs(filename, ios::binary);
+	std::ifstream ifs(filename, ios::in);
 	boost::archive::text_iarchive bin_ia(ifs);
 	bin_ia >> card;
 }
 
 int main()
 {
-	Card original_card("Ulica konopacka", 2, 10, 30, 90, 160, 60, 50, 50, 30);
+	Card* test = new DeedCard(
+		"Ulica konopacka", 
+		Rent(2, 10, 30, 90, 160), 
+		60, 50, 50, 30, 2
+		);
 
+	//DeedCard original_card2("Ulica ADGASGASG", 2, 10, 30, 90, 160, 60, 50, 50, 30);
 	std::string filename("test_boost.foo");
 
-	Save(original_card, filename.c_str());
-
+	Save(*test, filename.c_str());
+	//Save(original_card2, filename.c_str());
+	
 	Card new_card;
-
+	Card new_card2;
 	Restore(new_card, filename.c_str());
+	//Restore(new_card2, filename.c_str());
+
 	system("pause");
 }
-
-//#include <iostream>
-//#include <boost/archive/text_oarchive.hpp>
-//#include <boost/archive/text_iarchive.hpp>
-//#include <vector>
-//#include <string>
-//#include <fstream>
-//
-//using namespace std;
-//
-//class Vector {
-//public:
-//	float x;
-//	float y;
-//	Vector(float x, float y) : x(x), y(y) {}
-//	Vector() {}
-//	template<class Archive>
-//	void serialize(Archive & ar, const unsigned int version) 
-//	{
-//		ar & x;
-//		ar & y;
-//	}
-//};
-//
-//void main()
-//{
-//	std::string filename = "archive.txt";
-//	// zapisz obiekt do archiwum tekstowego
-//	Vector v1(1.0f, 2.0f);
-//	std::ofstream ofs(filename);
-//	boost::archive::text_oarchive oa(ofs);
-//	oa << v1;
-//	// odczytaj obiekt z archiwum tekstowego
-//	Vector v2;
-//	std::ifstream ifs(filename);
-//	boost::archive::text_iarchive ia(ifs);
-//	ia >> v2;
-//
-//	system("pause");
-//}

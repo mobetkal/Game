@@ -75,6 +75,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="functions.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
@@ -82,12 +83,17 @@
   <ItemGroup>
     <ClInclude Include="buttonsprite.h" />
     <ClInclude Include="buttontext.h" />
+    <ClInclude Include="card.h" />
+    <ClInclude Include="cardstatus.h" />
     <ClInclude Include="dice.h" />
+    <ClInclude Include="field.h" />
     <ClInclude Include="frame.h" />
+    <ClInclude Include="functions.h" />
     <ClInclude Include="game.h" />
-    <ClInclude Include="monopoly.h" />
+    <ClInclude Include="graphics.h" />
     <ClInclude Include="pawn.h" />
     <ClInclude Include="player.h" />
+    <ClInclude Include="rent.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

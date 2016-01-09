@@ -8,6 +8,7 @@ class ButtonText
 	GameState state;
 	bool SetStyle;
 public:
+	ButtonText(){}
 	ButtonText(const sf::String& text, const sf::Font& font, unsigned int characterSize, float y, GameState state, bool SetStyle = true)
 		:
 		button_text(text, font, characterSize),
@@ -41,6 +42,18 @@ public:
 	{
 		button_text.setPosition((1100 / 2 - button_text.getGlobalBounds().width / 2), y);
 		button_text.setColor(sf::Color::Black);
+	}
+	ButtonText(const sf::Text& text, sf::Color color, float y, bool SetStyle = true, float move = 0)
+		:
+		button_text(text),
+		SetStyle(SetStyle)
+	{
+		button_text.setColor(color);
+		if (SetStyle)
+			button_text.setStyle(sf::Text::Bold);
+		else
+			button_text.setStyle(sf::Text::Regular);
+		button_text.setPosition((700 / 2 - button_text.getGlobalBounds().width / 2) + move, y);
 	}
 	sf::Text& GetText() { return button_text; }
 	GameState GetState() const { return state; }

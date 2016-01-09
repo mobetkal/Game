@@ -12,33 +12,7 @@ class Pawn
 	sf::Sprite pawn;
 	std::vector<std::pair<float, float>> possition;
 	int area;
-public:
-	Pawn(sf::Texture& texturePawn, unsigned int color, int area = 0)
-		: 
-		texturePawn(texturePawn),
-		area(area)
-	{
-		this->color = SetColorPawn(color);
-		texturePawn.setSmooth(true);
-		pawn.setTexture(texturePawn);
-		LoadPossitons();
-		pawn.setPosition(possition[area].first, possition[area].second);
-	};
-	sf::Sprite& GetSprite()	{ return pawn; }
-	void SetArea(int newArea) { area = newArea; }
-	int GetArea() { return area; }
-	void GoJail() { pawn.setPosition(40.0f, 609.0f); }
-	Color SetColorPawn(unsigned int color)
-	{
-		if (color == 1)
-			return Color::BLUE;
-		else if (color == 2)
-			return Color::YELLOW;
-		else if (color == 3)
-			return Color::GREEN;
-		else
-			return Color::RED;
-	}
+
 	void LoadPossitons()
 	{
 		std::pair<float, float> jailArea;
@@ -89,7 +63,35 @@ public:
 		possition.emplace_back(std::make_pair(633.0f, 380.0f));
 		possition.emplace_back(std::make_pair(633.0f, 437.0f));
 		possition.emplace_back(std::make_pair(633.0f, 494.0f));
-		possition.emplace_back(std::make_pair(633.0f, 551.0f)); 
+		possition.emplace_back(std::make_pair(633.0f, 551.0f));
+	}
+
+public:
+	Pawn(sf::Texture& texturePawn, unsigned int color, int area = 0)
+		: 
+		texturePawn(texturePawn),
+		area(area)
+	{
+		this->color = SetColorPawn(color);
+		texturePawn.setSmooth(true);
+		pawn.setTexture(texturePawn);
+		LoadPossitons();
+		pawn.setPosition(possition[area].first, possition[area].second);
+	};
+	sf::Sprite& GetSprite()	{ return pawn; }
+	void SetArea(int newArea) { area = newArea; }
+	int GetArea() { return area; }
+	void GoToJail() { pawn.setPosition(40.0f, 609.0f); }
+	Color SetColorPawn(unsigned int color)
+	{
+		if (color == 1)
+			return Color::BLUE;
+		else if (color == 2)
+			return Color::YELLOW;
+		else if (color == 3)
+			return Color::GREEN;
+		else
+			return Color::RED;
 	}
 	
 	bool move(int meshNumber)

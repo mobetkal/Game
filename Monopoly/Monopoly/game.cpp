@@ -4,6 +4,7 @@
 #include <fstream>
 #include <Windows.h>
 #include <vector>
+#include <list>
 #include "game.h"
 #include "buttonsprite.h"
 #include "buttontext.h"
@@ -12,11 +13,17 @@
 #include "dice.h"
 #include "icon.c"
 #include "player.h"
+#include "field.h"
+#include "graphics.h"
+//#include "functions.h"
 
 using namespace std;
 using namespace sf;
 
-Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
+std::list<Field*> CreateList_ptrField(Graphics& graphics);
+Field* FindField(std::list<Field*> list, const unsigned int ID);
+
+Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None), graphics(Graphics())
 {
 	window.setPosition(Vector2i(100, 10));
 	window.setKeyRepeatEnabled(true);
@@ -24,60 +31,10 @@ Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None)
 	window.setVerticalSyncEnabled(true);
 	window.setFramerateLimit(60);
 
-	state = GameState::END;
-
-	if ((!bg_monopoly_logo.loadFromFile("graphics/bg_monopoly_logo.png")) || (!game_board.loadFromFile("graphics/game_board.png")))
-		return;
-	if ((!two_players.loadFromFile("graphics/pawn/two_players.png")) || (!two_players2.loadFromFile("graphics/pawn/two_players_hover.png")))
-		return;
-	if ((!three_players.loadFromFile("graphics/pawn/three_players.png")) || (!three_players2.loadFromFile("graphics/pawn/three_players_hover.png")))
-		return;
-	if ((!four_players.loadFromFile("graphics/pawn/four_players.png")) || (!four_players2.loadFromFile("graphics/pawn/four_players_hover.png")))
-		return;
-	if ((!frame.loadFromFile("graphics/frame.png")) || (!frame_active.loadFromFile("graphics/frame_active.png")) || (!frame_wrong.loadFromFile("graphics/frame_wrong.png")))
-		return;
-	vector<Texture> pawn(4);
-	int pawnSize = pawn.size();
-	if ((!pawn[1].loadFromFile("graphics/pawn/yellow.png")) || (!pawn[2].loadFromFile("graphics/pawn/green.png")))
-		return;
-	if ((!pawn[3].loadFromFile("graphics/pawn/red.png")) || (!pawn[0].loadFromFile("graphics/pawn/blue.png")))
-		return;
-	for (int i = 0; i < pawnSize; ++i)
-	{
-		pawn[i].setSmooth(true);
-		Game::pawns.emplace_back(pawn[i]);
-	}
-	if ((!pawn[1].loadFromFile("graphics/pawn/yellow_pawn.png")) || (!pawn[2].loadFromFile("graphics/pawn/green_pawn.png")))
-		return;
-	if ((!pawn[3].loadFromFile("graphics/pawn/red_pawn.png")) || (!pawn[0].loadFromFile("graphics/pawn/blue_pawn.png")))
-		return;
-	for (int i = 0; i < pawnSize; ++i)
-	{
-		pawn[i].setSmooth(true);
-		Game::pawns_forGame.emplace_back(pawn[i]);
-	}
-	vector<Texture> dice(6);
-	int diceSize = dice.size();
-	if ((!dice[0].loadFromFile("graphics/dice/meshNumber_1.png")) || (!dice[1].loadFromFile("graphics/dice/meshNumber_2.png")))
-		return;
-	if ((!dice[2].loadFromFile("graphics/dice/meshNumber_3.png")) || (!dice[3].loadFromFile("graphics/dice/meshNumber_4.png")))
-		return;
-	if ((!dice[4].loadFromFile("graphics/dice/meshNumber_5.png")) || (!dice[5].loadFromFile("graphics/dice/meshNumber_6.png")))
-		return;
-	for (int i = 0; i < diceSize; ++i)
-	{
-		dice[i].setSmooth(true);
-		Game::dice.emplace_back(dice[i]);
-	}
-	if ((!button_enable.loadFromFile("graphics/button_enable.png")) || (!button_disable.loadFromFile("graphics/button_disable.png")))
-		return;
-
-	// Fonts
-	if ((!font.loadFromFile("font/palab.ttf")) || (!font_menus.loadFromFile("font/kawoszeh.ttf")))
-		return;
-	
-	state = GameState::MODE_MENU;
-	//state = GameState::START_GAME;
+	if (graphics.StartingGame())
+		state = GameState::MODE_MENU;
+	else
+		state = GameState::END;
 }
 
 void Game::SetGameMode(bool result) { game_mode = result; }
@@ -124,13 +81,13 @@ void Game::Rungame()
 
 void Game::ModeMenu()
 {
-	bg.setTexture(bg_monopoly_logo);
+	bg.setTexture(graphics.bg_menuTexture());
 	vector<ButtonText> text_buttons;
-	text_buttons.emplace_back(L"Wybierz tryb gry:", font_menus, 65, 300.0f, false);
-	text_buttons.emplace_back(L"Gra online", font_menus, 45, 400.0f, GameState::MAIN_MENU);
-	text_buttons.emplace_back(L"Gra offline", font_menus, 45, 470.0f, GameState::MAIN_MENU);
-	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 540.0f, GameState::END);
-	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", font, 13, 789.0f, 283.0f, false);
+	text_buttons.emplace_back(L"Wybierz tryb gry:", graphics.GetMenuFont(), 65, 300.0f, false);
+	text_buttons.emplace_back(L"Gra online", graphics.GetMenuFont(), 45, 400.0f, GameState::MAIN_MENU);
+	text_buttons.emplace_back(L"Gra offline", graphics.GetMenuFont(), 45, 470.0f, GameState::MAIN_MENU);
+	text_buttons.emplace_back(L"Wyjdź z gry", graphics.GetMenuFont(), 45, 540.0f, GameState::END);
+	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", graphics.GetPalabFont(), 13, 789.0f, 283.0f, false);
 
 	ButtonText* hoverButton_text = nullptr;
 		
@@ -181,15 +138,15 @@ void Game::ModeMenu()
 
 void Game::MainMenu()
 {
-	bg.setTexture(bg_monopoly_logo);
+	bg.setTexture(graphics.bg_menuTexture());
 
 	vector<ButtonText> text_buttons;
 	if (!GetGameMode())
-		text_buttons.emplace_back(L"Kontynuuj grę", font_menus, 45, 350.0f, GameState::END); // Dorobić CONTINUE
-	text_buttons.emplace_back(L"Nowa gra", font_menus, 45, 410.0f, GameState::PLAYERS_MENU);
-	text_buttons.emplace_back(L"Powrót", font_menus, 45, 470.0f, GameState::MODE_MENU);
-	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 530.0f, GameState::END);
-	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", font, 13, 789.0f, 283.0f, false);
+		text_buttons.emplace_back(L"Kontynuuj grę", graphics.GetMenuFont(), 45, 350.0f, GameState::END); // Dorobić CONTINUE
+	text_buttons.emplace_back(L"Nowa gra", graphics.GetMenuFont(), 45, 410.0f, GameState::PLAYERS_MENU);
+	text_buttons.emplace_back(L"Powrót", graphics.GetMenuFont(), 45, 470.0f, GameState::MODE_MENU);
+	text_buttons.emplace_back(L"Wyjdź z gry", graphics.GetMenuFont(), 45, 530.0f, GameState::END);
+	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", graphics.GetPalabFont(), 13, 789.0f, 283.0f, false);
 
 	ButtonText* hoverButton_text = nullptr;
 
@@ -240,20 +197,20 @@ void Game::MainMenu()
 
 void Game::PlayersMenu()
 {
-	bg.setTexture(bg_monopoly_logo);
+	bg.setTexture(graphics.bg_menuTexture());
 
 	vector<ButtonText> text_buttons;
-	text_buttons.emplace_back(L"Wybierz liczbę graczy:", font_menus, 65, 300.0f, false);
-	text_buttons.emplace_back(L"Powrót", font_menus, 45, 550.0f, GameState::MAIN_MENU);
-	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 600.0f, GameState::END);
-	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", font, 13, 789.0f, 283.0f, false);
+	text_buttons.emplace_back(L"Wybierz liczbę graczy:", graphics.GetMenuFont(), 65, 300.0f, false);
+	text_buttons.emplace_back(L"Powrót", graphics.GetMenuFont(), 45, 550.0f, GameState::MAIN_MENU);
+	text_buttons.emplace_back(L"Wyjdź z gry", graphics.GetMenuFont(), 45, 600.0f, GameState::END);
+	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", graphics.GetPalabFont(), 13, 789.0f, 283.0f, false);
 
 	ButtonText* hoverButton_text = nullptr;
 
 	vector<ButtonSprite> img_buttons;
-	img_buttons.emplace_back(make_pair(two_players, two_players2), 180.0f, 410.0f, GameState::SET_NAMES);
-	img_buttons.emplace_back(make_pair(three_players, three_players2), 450.0f, 410.0f, GameState::SET_NAMES);
-	img_buttons.emplace_back(make_pair(four_players, four_players2), 740.0f, 410.0f, GameState::SET_NAMES);
+	img_buttons.emplace_back(graphics.GetTwoPlayers(), graphics.GetTwoPlayersHover(), 180.0f, 410.0f, GameState::SET_NAMES);
+	img_buttons.emplace_back(graphics.GetThreePlayers(), graphics.GetThreePlayersHover(), 450.0f, 410.0f, GameState::SET_NAMES);
+	img_buttons.emplace_back(graphics.GetFourPlayers(), graphics.GetFourPlayersHover(), 740.0f, 410.0f, GameState::SET_NAMES);
 	
 	ButtonSprite* hoverButton_img = nullptr;
 
@@ -324,29 +281,29 @@ void Game::PlayersMenu()
 
 void Game::SetNames()
 {
-	bg.setTexture(bg_monopoly_logo);
+	bg.setTexture(graphics.bg_menuTexture());
 	
 	vector<Text> players;
 	vector<Frame> frames;
 	vector<Sprite> pawn;
 	for (int i = 1; i <= GetPlayers(); ++i)
 	{
-		players.emplace_back(L"Gracz " + to_string(i) + ":", font_menus, 40);
+		players.emplace_back(L"Gracz " + to_string(i) + ":", graphics.GetMenuFont(), 40);
 		players[i - 1].setPosition(290.0f, (float)(380 + (i - 1) * 55));
 		players[i - 1].setColor(Color::Black);
-		frames.emplace_back(make_pair(frame, frame_active), 445.0f, (float)(380 + (i - 1) * 55), "", font_menus, 30);
+		frames.emplace_back(make_pair(graphics.GetFrameTexture(), graphics.GetFrameActiveTexture()), 445.0f, (float)(380 + (i - 1) * 55), "", graphics.GetMenuFont(), 30);
 		pawn.emplace_back();
-		pawn[i - 1].setTexture(pawns[i-1]);
+		pawn[i - 1].setTexture(graphics.GetPawnsImg()[i - 1]);
 		pawn[i - 1].setPosition(250.0f, (float)(380 + (i - 1) * 55));
 	}
 	for (auto& frame : frames)
 		frame.GetSprite().setTexture(frame.GetTexture().first);
 	vector<ButtonText> text_buttons;
-	text_buttons.emplace_back(L"Wpisz nicki graczy:", font_menus, 65, 290.0f, false);
-	text_buttons.emplace_back(L"Powrót", font_menus, 45, 590.0f, GameState::PLAYERS_MENU);
-	text_buttons.emplace_back(L"Wyjdź z gry", font_menus, 45, 635.0f, GameState::END);
-	text_buttons.emplace_back(L"GRAJ", font_menus, 50, 920, 565.0f, GameState::START_GAME);
-	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", font, 13, 789.0f, 283.0f, false);
+	text_buttons.emplace_back(L"Wpisz nicki graczy:", graphics.GetMenuFont(), 65, 290.0f, false);
+	text_buttons.emplace_back(L"Powrót", graphics.GetMenuFont(), 45, 590.0f, GameState::PLAYERS_MENU);
+	text_buttons.emplace_back(L"Wyjdź z gry", graphics.GetMenuFont(), 45, 635.0f, GameState::END);
+	text_buttons.emplace_back(L"GRAJ", graphics.GetMenuFont(), 50, 920, 565.0f, GameState::START_GAME);
+	text_buttons.emplace_back(L"MARCIN OBETKAŁ©", graphics.GetPalabFont(), 13, 789.0f, 283.0f, false);
 
 	ButtonText* hoverButton_text = nullptr;
 
@@ -387,8 +344,8 @@ void Game::SetNames()
 						for (int j = i + 1; j < frameSize; ++j)
 						if (frames[i].GetString() == frames[j].GetString())
 						{
-							frames[i].GetSprite().setTexture(frame_wrong);
-							frames[j].GetSprite().setTexture(frame_wrong);
+							frames[i].GetSprite().setTexture(graphics.GetFrameWrongTexture());
+							frames[j].GetSprite().setTexture(graphics.GetFrameWrongTexture());
 							state = GameState::SET_NAMES;
 							wrong = true;
 						}
@@ -397,7 +354,7 @@ void Game::SetNames()
 					{
 						if (frame.GetString() == "" || frame.GetString() == " ")
 						{
-							frame.GetSprite().setTexture(frame_wrong);
+							frame.GetSprite().setTexture(graphics.GetFrameWrongTexture());
 							state = GameState::SET_NAMES;
 						}
 						else if (!wrong)
@@ -468,46 +425,57 @@ void Game::SetNames()
 
 void Game::StartGame()
 {
-	bg.setTexture(game_board);
-	Dice LeftDice(dice, 810.0f, 50.0f);
-	Dice RightDice(dice, 865.0f, 50.0f);
+	bg.setTexture(graphics.game_boardTexture());
+	Dice LeftDice(graphics.GetDiceTexture(), 810.0f, 50.0f);
+	Dice RightDice(graphics.GetDiceTexture(), 865.0f, 50.0f);
 	Dice ChoosePlayer(1, GetPlayers());
 
 	vector<Pawn> pawns;
 	for (int i = 1; i <= GetPlayers(); ++i)
 	{
-		pawns.emplace_back(pawns_forGame[i - 1], i, 0);
+		pawns.emplace_back(graphics.GetPawns()[i - 1], i, 0);
 	}
 		
 	vector<Player> player;
 	for (int i = 1; i <= GetPlayers(); ++i)
-		player.emplace_back(names[i - 1], pawns[i - 1]);
+		player.emplace_back(Text(names[i - 1], graphics.GetMenuFont(), 20), pawns[i - 1], i - 1, graphics);
 	int firstPlayer = ChoosePlayer.RollDice() - 1;
 	player[firstPlayer].SetActive(true);
 	player[firstPlayer].SetActiveMovement(true);
+	//player[firstPlayer].SetJailCard(true);
+	//player[firstPlayer].SetBlock(2);
+
+	list<Field*> fields = CreateList_ptrField(graphics);
+	bool ShownCard = false;
+	bool CloseCard = false;
 
 	vector<ButtonSprite> imgButtons;
-	imgButtons.emplace_back(button_enable, 936.0f, 55.0f);
-	imgButtons.emplace_back(button_enable, 936.0f, 540.0f);
+	imgButtons.emplace_back(graphics.GetButtonEnable(), graphics.GetButtonDisable(), 936.0f, 55.0f);
+	imgButtons.emplace_back(graphics.GetButtonEnable(), graphics.GetButtonDisable(), 936.0f, 540.0f);
+	//pair<ButtonSprite, ButtonText> rollDiceButton = make_pair(ButtonSprite(button_enable, button_disable, 936.0f, 55.0f), ButtonText(L"Rzuć kostkami!", font_menus, 17, 953.0f, 63.0f, false));
+	//pair<ButtonSprite, ButtonText> nextPlayerButton = make_pair(ButtonSprite(button_enable, button_disable, 936.0f, 540.0f), ButtonText(L"Następny gracz!", font_menus, 17, 945.0f, 548.0f, false));
+	pair<ButtonSprite, ButtonText> buy = make_pair(ButtonSprite(graphics.GetButtonEnableShort(), graphics.GetButtonDisableShort(), 225.0f, 515.0f), ButtonText(L"KUP", graphics.GetMenuFont(), 20, 268.0f, 522.0f, false));
+	pair<ButtonSprite, ButtonText> bid = make_pair(ButtonSprite(graphics.GetButtonEnableShort(), graphics.GetButtonDisableShort(), 355.0f, 515.0f, false), ButtonText(L"LICYTUJ", graphics.GetMenuFont(), 20, 381.0f, 522.0f, false)); // Brak opcji
 
 	vector<ButtonText> textButtons;
-	textButtons.emplace_back(L"Aktywny Gracz", font_menus, 28, 840.0f, 5.0f, false);
-	textButtons.emplace_back(L"Brak...", font_menus, 21, 705.0f, 606.0f, false);
-	textButtons.emplace_back(L"99999", font_menus, 24, 835.0f, 103.0f, false);
-	textButtons.emplace_back(L"Powiadomienia dodatkowe:", font_menus, 21, 705.0f, 580.0f, false);
-	textButtons.emplace_back(L"Twój ruch:", font_menus, 28, 705.0f, 5.0f, false);
-	textButtons.emplace_back(L"Stan konta:", font_menus, 24, 705.0f, 103.0f, false);
-	textButtons.emplace_back(L"Rzuć kostkami!", font_menus, 17, 953.0f, 63.0f, false);
-	textButtons.emplace_back(L"----------------------------------------------------------------", font_menus, 21, 705.0f, 93.0f, false);
-	textButtons.emplace_back(L"----------------------------", font_menus, 21, 924.0f, 568.0f, false);
-	textButtons.emplace_back(L"-----------------------------------------------------------------", font_menus, 21, 702.0f, 593.0f, false);
-	textButtons.emplace_back(L"Następny gracz!", font_menus, 17, 945.0f, 548.0f, false);
-	textButtons.emplace_back(L"Copyright © 2016 by MARCIN OBETKAŁ PolSl Project", font, 10, 327.0f, 591.0f, false);
+	textButtons.emplace_back(L"Aktywny Gracz", graphics.GetMenuFont(), 28, 840.0f, 5.0f, false);
+	textButtons.emplace_back(L"Brak...", graphics.GetMenuFont(), 21, 705.0f, 606.0f, false);
+	textButtons.emplace_back(L"99999", graphics.GetMenuFont(), 24, 835.0f, 103.0f, false);
+	textButtons.emplace_back(L"Powiadomienia dodatkowe:", graphics.GetMenuFont(), 21, 705.0f, 580.0f, false);
+	textButtons.emplace_back(L"Twój ruch:", graphics.GetMenuFont(), 28, 705.0f, 5.0f, false);
+	textButtons.emplace_back(L"Stan konta:", graphics.GetMenuFont(), 24, 705.0f, 103.0f, false);
+	textButtons.emplace_back(L"Rzuć kostkami!", graphics.GetMenuFont(), 17, 953.0f, 63.0f, false);
+	textButtons.emplace_back(L"----------------------------------------------------------------", graphics.GetMenuFont(), 21, 705.0f, 93.0f, false);
+	textButtons.emplace_back(L"----------------------------", graphics.GetMenuFont(), 21, 924.0f, 568.0f, false);
+	textButtons.emplace_back(L"-----------------------------------------------------------------", graphics.GetMenuFont(), 21, 702.0f, 593.0f, false);
+	textButtons.emplace_back(L"Następny gracz!", graphics.GetMenuFont(), 17, 945.0f, 548.0f, false);
+	textButtons.emplace_back(L"Copyright © 2016 by MARCIN OBETKAŁ PolSl Project", graphics.GetPalabFont(), 10, 327.0f, 591.0f, false);
 
 	ButtonSprite* hoverImgButton = nullptr;
 	ButtonText* hoverTextButton = nullptr;
 
 	Player* activePlayer = nullptr;
+	Field* FindedCard = nullptr;
 
 	while (state == GameState::START_GAME)
 	{
@@ -517,17 +485,27 @@ void Game::StartGame()
 		activePlayer = nullptr;
 
 		for (auto& active : player)
-		if (active.IsActive())
 		{
-			activePlayer = &active;
-			textButtons[0].GetText().setString(activePlayer->GetString());
-			textButtons[2].GetText().setString(to_string(activePlayer->AccoundStatus()) + L" zł");
+			if (active.IsActive())
+			{
+				activePlayer = &active;
+				textButtons[0].GetText().setString(activePlayer->GetString());
+				textButtons[2].GetText().setString(to_string(activePlayer->AccoundStatus()) + L" zł");
+			}
+			active.GetMoneyStatus().setString(L"Stan konta: " + to_string(active.AccoundStatus()));
 		}
+		
 
-		for (auto& button : imgButtons)
-		if (button.GetSprite().getGlobalBounds().contains(mouse))
+		if (activePlayer->IsActiveField())
 		{
-			hoverImgButton = &button;
+			FindedCard = FindField(fields, activePlayer->GetPawn().GetArea());
+			if (!FindedCard)
+				activePlayer->SetActiveField(false);
+		}
+		else
+		{
+			FindedCard = nullptr;
+			activePlayer->SetActiveField(false);
 		}
 
 		for (auto& button : textButtons)
@@ -540,16 +518,35 @@ void Game::StartGame()
 		{
 			button.GetText().setStyle(Text::Regular);
 		}
+
+		for (auto& button : imgButtons)
+		if (button.GetSprite().getGlobalBounds().contains(mouse))
+		{
+			hoverImgButton = &button;
+		}
+		if (activePlayer->IsActiveField())
+		{
+			if (buy.first.GetSprite().getGlobalBounds().contains(mouse))
+				hoverImgButton = &buy.first;
+			else if (bid.first.GetSprite().getGlobalBounds().contains(mouse))
+				hoverImgButton = &bid.first;
+		}
 		
 		if (activePlayer->IsActiveMovement())
 		{
-			imgButtons[0].GetSprite().setTexture(button_enable);
-			imgButtons[1].GetSprite().setTexture(button_disable);
+			if (!activePlayer->IsActiveField())// || !ShownCard)
+				imgButtons[0].activeButton(true);
+			else 
+				imgButtons[0].activeButton(false);
+			imgButtons[1].activeButton(false);
 		}
 		else
 		{
-			imgButtons[0].GetSprite().setTexture(button_disable);
-			imgButtons[1].GetSprite().setTexture(button_enable);
+			imgButtons[0].activeButton(false);
+			if (!activePlayer->IsActiveField())// || !ShownCard)
+				imgButtons[1].activeButton(true);
+			else
+				imgButtons[0].activeButton(false);
 		}
 
 		Event event;
@@ -561,106 +558,307 @@ void Game::StartGame()
 				state = GameState::END;
 				break;
 			}
-			
-			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverImgButton == &imgButtons[0] && !activePlayer->ThrewDoublet() && activePlayer->IsActiveMovement())
-			{
-				int firstRollDice = LeftDice.RollDice();
-				int secondRollDice = RightDice.RollDice();	
-				if (!activePlayer->IsBlocked())
-				{	
-					if (activePlayer->GetPawn().move(firstRollDice + secondRollDice))
-						activePlayer->Money(200);
-					//ZARZĄDZANIE POLEM
-					if (firstRollDice == secondRollDice)
-					{
-						activePlayer->SetDoublet(true);
-						textButtons[1].GetText().setString(L"Wyrzuciłeś dublet!\nRzuć kostkami jeszcze raz!");
-					}
-					else
-						activePlayer->SetActiveMovement(false);
-				}
-				else
-				{
-					if (firstRollDice == secondRollDice)
-					{
-						activePlayer->SetDoublet(true);
-						textButtons[1].GetText().setString(L"Wyrzuciłeś dublet!\nRzuć kostkami jeszcze raz!");
-					}
-					else
-					{
-						textButtons[1].GetText().setString(L"Nie udało się wyrzucić dubletu!\nOddaj ruch kolejnemu graczowi!");
-						activePlayer->SetActiveMovement(false);
-					}
-					--(*activePlayer);
-				}
-				hoverImgButton = nullptr;
-			}
 
-			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverImgButton == &imgButtons[0] && activePlayer->ThrewDoublet() && activePlayer->IsActiveMovement())
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 			{
-				int firstRollDice = LeftDice.RollDice();
-				int secondRollDice = RightDice.RollDice();
-				if (!activePlayer->IsBlocked())
+				if (hoverImgButton == &buy.first && ShownCard && buy.first.IsActive())
 				{
-					if (firstRollDice != secondRollDice)
+					FindedCard->ActionBuy(*activePlayer);
+					ShownCard = false;
+					activePlayer->SetActiveField(false);
+				}
+
+				if (activePlayer->GetJailCard().getGlobalBounds().contains(mouse) && activePlayer->ExistJailCard() && activePlayer->IsBlocked() && activePlayer->IsActiveMovement() && !activePlayer->IsActiveField())
+				{
+					activePlayer->SetJailCard(false);
+					activePlayer->SetBlock(0);
+					activePlayer->SetActiveMovement(false);
+				}
+
+				if (ShownCard && !bid.first.IsActive() && !buy.first.IsActive()) // Kiedy karty nie da się kupić, bo jest kogoś :P
+				{
+					CloseCard = true;
+					ShownCard = false; // pobiera zawsze czynsz bez domków! :)
+					imgButtons[1].activeButton(true);
+					if (DeedField* card = dynamic_cast<DeedField*>(FindedCard))
 					{
-						textButtons[1].GetText().setString(L"Brak...");
+						Player* owner = (card->GetCard<DeedCard>().GetOwner());
+						if (owner != nullptr && owner != activePlayer)
+						{
+							unsigned int price = card->GetCard<DeedCard>().Get_rents().Get_withoutHouse(); //!!
+							owner->AddMoney(price);
+							activePlayer->SpendMoney(price);
+						}
+					}
+				}
+
+				if (hoverImgButton == &imgButtons[0] && !activePlayer->ThrewDoublet() && imgButtons[0].IsActive())
+				{
+					int firstRollDice = LeftDice.RollDice();
+					int secondRollDice = RightDice.RollDice();
+					if (!activePlayer->IsBlocked())
+					{
 						if (activePlayer->GetPawn().move(firstRollDice + secondRollDice))
-							activePlayer->Money(200);
+							activePlayer->AddMoney(200);
 						//ZARZĄDZANIE POLEM
+						activePlayer->SetActiveField(true);
+						ShownCard = false;
+
+						if (firstRollDice == secondRollDice)
+						{
+							activePlayer->SetDoublet(true);
+							textButtons[1].GetText().setString(L"Wyrzuciłeś dublet!\nRzuć kostkami jeszcze raz!");
+						}
+						else
+							activePlayer->SetActiveMovement(false);
 					}
 					else
 					{
-						activePlayer->SetBlock(2);
-						activePlayer->GetPawn().GoJail();
-						textButtons[1].GetText().setString(L"Wyrzuciłeś drugi dublet!\nTrafiasz do więzienia!");
+						if (firstRollDice == secondRollDice)
+						{
+							activePlayer->SetDoublet(true);
+							textButtons[1].GetText().setString(L"Wyrzuciłeś dublet!\nRzuć kostkami jeszcze raz!");
+						}
+						else
+						{
+							textButtons[1].GetText().setString(L"Nie udało się wyrzucić dubletu!\nOddaj ruch kolejnemu graczowi!");
+							activePlayer->SetActiveMovement(false);
+						}
+						--(*activePlayer);
 					}
+					hoverImgButton = nullptr;
 				}
-				else
-				{
-					if (firstRollDice == secondRollDice)
-					{
-						textButtons[1].GetText().setString(L"Wyrzuciłeś drugi dublet!\nWychodzisz z więzienia!");
-						activePlayer->GetPawn().SetArea(10);
-						if (activePlayer->GetPawn().move(firstRollDice + secondRollDice))
-							activePlayer->Money(200);
-						activePlayer->SetBlock(0);
-						//ZARZĄDZANIE POLEM
-					}
-				}
-				activePlayer->SetDoublet(false);
-				activePlayer->SetActiveMovement(false);
-			}
 
-			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverImgButton == &imgButtons[1] && !activePlayer->IsActiveMovement())
-			{
-				activePlayer->SetActive(false);
-				textButtons[1].GetText().setString(L"Brak...");
-				if (activePlayer != &player[GetPlayers() - 1])
+				if (hoverImgButton == &imgButtons[0] && activePlayer->ThrewDoublet() && (!activePlayer->IsActiveField() || !ShownCard))
 				{
-					(activePlayer + 1)->SetActive(true);
-					(activePlayer + 1)->SetActiveMovement(true);
-				}	
-				else
-				{
-					player[0].SetActive(true);
-					player[0].SetActiveMovement(true);
+					int firstRollDice = LeftDice.RollDice();
+					int secondRollDice = RightDice.RollDice();
+					if (!activePlayer->IsBlocked())
+					{
+						if (firstRollDice != secondRollDice)
+						{
+							textButtons[1].GetText().setString(L"Brak...");
+							if (activePlayer->GetPawn().move(firstRollDice + secondRollDice))
+								activePlayer->AddMoney(200);
+							//ZARZĄDZANIE POLEM
+							activePlayer->SetActiveField(true);
+							ShownCard = false;
+						}
+						else
+						{
+							activePlayer->SetBlock(2, true);
+							//activePlayer->GetPawn().GoJail(activePlayer);
+							textButtons[1].GetText().setString(L"Wyrzuciłeś drugi dublet!\nTrafiasz do więzienia!");
+						}
+					}
+					else
+					{
+						if (firstRollDice == secondRollDice)
+						{
+							textButtons[1].GetText().setString(L"Wyrzuciłeś drugi dublet!\nWychodzisz z więzienia!");
+							activePlayer->GetPawn().SetArea(10);
+							if (activePlayer->GetPawn().move(firstRollDice + secondRollDice))
+								activePlayer->AddMoney(200);
+							activePlayer->SetBlock(0);
+							//ZARZĄDZANIE POLEM
+							activePlayer->SetActiveField(true);
+							ShownCard = false;
+						}
+					}
+					activePlayer->SetDoublet(false);
+					activePlayer->SetActiveMovement(false);
 				}
-				for (auto& active : player)
-				if (active.IsActive() && active.IsBlocked())
+
+				if (hoverImgButton == &imgButtons[1] && hoverImgButton->IsActive())
+				{
+					activePlayer->SetActive(false);
+					textButtons[1].GetText().setString(L"Brak...");
+					if (activePlayer != &player[GetPlayers() - 1])
+					{
+						(activePlayer + 1)->SetActive(true);
+						(activePlayer + 1)->SetActiveMovement(true);
+					}
+					else
+					{
+						player[0].SetActive(true);
+						player[0].SetActiveMovement(true);
+					}
+					for (auto& active : player)
+					if (active.IsActive() && active.IsBlocked())
 						textButtons[1].GetText().setString(L"Jesteś zablokowany, rzuć kostkami!\nDwa dublety wypuszczą Cię z więzienia!");
-			}
+				}
+
+			}			
 		}
 		window.clear();
 		window.draw(bg);
 		for (auto& pawn : player)
+		{
 			window.draw(pawn.GetPawn().GetSprite());
+			window.draw(pawn);
+			//for (auto card : pawn.GetCardStatus().GetVectorCards())
+				//window.draw(card.GetVertCard());
+		}
 		window.draw(LeftDice.GetSprite());
 		window.draw(RightDice.GetSprite());
 		for (auto& button : imgButtons)
 			window.draw(button.GetSprite());
 		for (auto& button : textButtons)
 			window.draw(button.GetText());
+		if (FindedCard != nullptr && activePlayer->IsActiveField() && !CloseCard)
+		{
+			for (auto& elem : FindedCard->ShowGraphics())
+				window.draw(elem.GetSprite());
+			if (DeedField* card = dynamic_cast<DeedField*>(FindedCard))
+			{
+				window.draw(card->GetColor());
+				Player* owner = (card->GetCard<DeedCard>().GetOwner());
+				if (owner != nullptr)
+				{
+					buy.first.activeButton(false);
+					//bid.first.activeButton(false);
+					if (owner != activePlayer)
+					{
+						unsigned int price = card->GetCard<DeedCard>().Get_rents().Get_withoutHouse();
+						textButtons[1].GetText().setString(L"Karta jest własnością " + owner->GetString() + "\nPobrano czynsz " + to_string(price) + L" zł");
+					}
+					else
+						textButtons[1].GetText().setString(L"Karta jest Twoją własnością!");
+				}
+				else
+					buy.first.activeButton(true);
+
+				bid.first.activeButton(false); // Brak możliwości licytowania
+				window.draw(buy.first.GetSprite());
+				window.draw(buy.second.GetText());
+				window.draw(bid.first.GetSprite());
+				window.draw(bid.second.GetText());
+			}
+			for (auto& elem : FindedCard->ShowTexts())
+				window.draw(elem.GetText()); 
+			ShownCard = true;
+		}
+		else if (CloseCard)
+		{
+			CloseCard = false;
+			activePlayer->SetActiveField(false);
+		}	
+		if (activePlayer->ExistJailCard())
+		{
+			window.draw(activePlayer->GetJailCard());
+			window.draw(activePlayer->GetJailCardTitle());
+		}
 		window.display();
 	}
+}
+
+Field* FindField(std::list<Field*> list, const unsigned int ID)
+{
+	auto elem = list.begin();
+	auto end = list.end();
+	while (elem != end)
+	{
+		if ((*elem)->GetArea() == ID)
+			return *elem;
+		++elem;
+	}
+	return nullptr;
+}
+
+std::list<Field*> CreateList_ptrField(Graphics& graphics)
+{
+	Font& CardFont = graphics.GetCardFont();
+	Texture DeedCardTexture = graphics.GetDeedCardTexture();
+
+	std::list<Field*> fields;
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA KONOPACKA", CardFont, Rent(2, 10, 30, 90, 160), 60, 50, 50, 30), DeedCardTexture, Color(78, 61, 113), 1
+		));
+	//// kasa społeczna 2
+
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA STALOWA", CardFont, Rent(4, 20, 60, 180, 320), 60, 50, 50, 30), DeedCardTexture, Color(78, 61, 113), 3
+		));
+	////fields.emplace_back(4); -200ZŁ 4
+	///*fields.emplace_back(new TrainField(
+	//	SpecialCard("Dworzec Zachodni", 200, 100), 25, 5
+	//	));*/
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA RADZYMIŃSKA", CardFont, Rent(6, 30, 90, 270, 400), 100, 50, 50, 50), DeedCardTexture, Color(178, 194, 228), 6
+		));
+
+	//// karta szansy 7
+
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA JAGIELLOŃSKA", CardFont, Rent(6, 30, 90, 270, 400), 100, 50, 50, 50), DeedCardTexture, Color(178, 194, 228), 8
+		));
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA TARGOWA", CardFont, Rent(8, 40, 100, 300, 450), 120, 50, 50, 60), DeedCardTexture, Color(178, 194, 228), 9
+		));
+	//10 NIC
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA PŁOWIECKA", CardFont, Rent(10, 50, 150, 450, 625), 140, 100, 100, 70), DeedCardTexture, Color(177, 50, 95), 11
+		));
+	// 12 ELEKTROWNIA
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA MARSA", CardFont, Rent(10, 50, 150, 450, 625), 140, 100, 100, 70), DeedCardTexture, Color(177, 50, 95), 13
+		));
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA GROCHOWSKA", CardFont, Rent(12, 60, 180, 500, 700), 160, 100, 100, 80), DeedCardTexture, Color(177, 50, 95), 14
+		));
+	//DWORZEC 15
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA OBOZOWA", CardFont, Rent(14, 70, 200, 550, 750), 180, 100, 100, 90), DeedCardTexture, Color(243, 141, 77), 16
+		));
+	//KASA SPOŁECZNA 17
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA GÓRCZEWSKA", CardFont, Rent(14, 70, 200, 550, 750), 180, 100, 100, 90), DeedCardTexture, Color(243, 141, 77), 18
+		));
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA WOLSKA", CardFont, Rent(16, 80, 220, 600, 800), 200, 100, 100, 100), DeedCardTexture, Color(243, 141, 77), 19
+		));
+	//20 NIC
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA MICKIEWICZA", CardFont, Rent(18, 90, 250, 700, 875), 220, 150, 150, 110), DeedCardTexture, Color(239, 59, 58), 21
+		));
+	//KARTA SZANSY 22
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA SŁOWACKIEGO", CardFont, Rent(18, 90, 250, 700, 875), 220, 150, 150, 110), DeedCardTexture, Color(239, 59, 58), 23
+		));
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA WILSONA", CardFont, Rent(20, 100, 300, 750, 925), 240, 150, 150, 120), DeedCardTexture, Color(239, 59, 58), 24
+		));
+	// DWORZEC 25
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA ŚWIĘTOKRZYSKA", CardFont, Rent(22, 110, 330, 800, 975), 260, 150, 150, 130), DeedCardTexture, Color(237, 247, 140), 26
+		));
+	fields.emplace_back(new DeedField(
+		DeedCard(L"KRAKOWSKIE PRZEDMIEŚCIE", CardFont, Rent(22, 110, 330, 800, 975), 260, 150, 150, 130), DeedCardTexture, Color(237, 247, 140), 27
+		));
+	//WODOCIAG 28
+	fields.emplace_back(new DeedField(
+		DeedCard(L"NOWY ŚWIAT", CardFont, Rent(24, 120, 360, 850, 1025), 280, 150, 150, 140), DeedCardTexture, Color(237, 247, 140), 29
+		));
+	//GO TO JAIL! 30
+	fields.emplace_back(new DeedField(
+		DeedCard(L"PLAC TRZECH KRZYŻY", CardFont, Rent(26, 130, 390, 900, 1100), 300, 200, 200, 150), DeedCardTexture, Color(83, 148, 114), 31
+		));
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA MARSZAŁKOWSKA", CardFont, Rent(26, 130, 390, 900, 1100), 300, 200, 200, 150), DeedCardTexture, Color(83, 148, 114), 32
+		));
+	//KASA SPOŁECZNA 33
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ALEJE JEROZOLIMSKIE", CardFont, Rent(28, 150, 450, 1000, 1200), 320, 200, 200, 160), DeedCardTexture, Color(83, 148, 114), 34
+		));
+	//DWORZEC 35
+	//SZANSA 36
+	fields.emplace_back(new DeedField(
+		DeedCard(L"BELWEDERSKA", CardFont, Rent(35, 175, 500, 1100, 1300), 350, 200, 200, 175), DeedCardTexture, Color(56, 79, 146), 37
+		));
+	//PODATEK -100ZŁ 38
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ALEJE UJAZDOWSKIE", CardFont, Rent(50, 200, 600, 1400, 1700), 400, 200, 200, 200), DeedCardTexture, Color(56, 79, 146), 39
+		));
+	//FindField(fields, 6)->Action();
+	return fields;
 }

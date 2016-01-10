@@ -11,6 +11,7 @@ class Pawn
 	Color color;
 	sf::Sprite pawn;
 	std::vector<std::pair<float, float>> possition;
+	int LastRollDice;
 	int area;
 
 	void LoadPossitons()
@@ -70,6 +71,7 @@ public:
 	Pawn(sf::Texture& texturePawn, unsigned int color, int area = 0)
 		: 
 		texturePawn(texturePawn),
+		LastRollDice(0),
 		area(area)
 	{
 		this->color = SetColorPawn(color);
@@ -82,6 +84,7 @@ public:
 	void SetArea(int newArea) { area = newArea; }
 	int GetArea() { return area; }
 	void GoToJail() { pawn.setPosition(40.0f, 609.0f); }
+	int GetLastRollDice(){ return LastRollDice; }
 	Color SetColorPawn(unsigned int color)
 	{
 		if (color == 1)
@@ -96,6 +99,7 @@ public:
 	
 	bool move(int meshNumber)
 	{
+		LastRollDice = meshNumber;
 		for (int i = 1; i <= meshNumber; ++i)
 		{
 			if (area + i < 40)

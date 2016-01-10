@@ -43,9 +43,7 @@ class Player : public sf::Drawable, public sf::Transformable
 					target.draw(card.GetVertCard(), states);
 				}
 			}
-				
 		}
-
 	}
 
 public:
@@ -74,7 +72,7 @@ public:
 		JailCardTitle.setColor(sf::Color::Black);
 
 		Cards.emplace_back(new CardStatus(MiniCardsTexture[1], 4, sf::Color::Black, 700.0f, 160.0f, PlayerID));			// TRAINS
-		Cards.emplace_back(new CardStatus(MiniCardsTexture[2], 2, sf::Color::Blue, 813.0f, 160.0f, PlayerID));			// SPECIAL ???
+		Cards.emplace_back(new CardStatus(MiniCardsTexture[2], 2, sf::Color(149, 149, 149), 813.0f, 160.0f, PlayerID));	// SPECIAL
 		Cards.emplace_back(new CardStatus(MiniCardsTexture[3], 2, sf::Color(78, 61, 113), 872.0f, 160.0f, PlayerID));	// PURPLE
 		Cards.emplace_back(new CardStatus(MiniCardsTexture[4], 3, sf::Color(178, 194, 228), 931.0f, 160.0f, PlayerID));	// LIGHT BLUE
 		Cards.emplace_back(new CardStatus(MiniCardsTexture[5], 3, sf::Color(177, 50, 95), 1017.0f, 160.0f, PlayerID));	// PINK
@@ -85,7 +83,7 @@ public:
 		Cards.emplace_back(new CardStatus(MiniCardsTexture[9], 3, sf::Color(83, 148, 114), 958.0f, 198.0f, PlayerID));	// GREEN
 		Cards.emplace_back(new CardStatus(MiniCardsTexture[10], 2, sf::Color(56, 79, 146), 1044.0f, 198.0f, PlayerID));	// BLUE	
 
-		JailCard.setTexture(MiniCardsTexture[0]); // Zmienić
+		JailCard.setTexture(MiniCardsTexture[0]); 
 		JailCard.setPosition(755.0f, 55.0f);
 	};
 	sf::Text& GetMoneyStatus(){ return moneyStatus; }

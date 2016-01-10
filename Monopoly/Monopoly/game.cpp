@@ -578,14 +578,34 @@ void Game::StartGame()
 				if (ShownCard && !bid.first.IsActive() && !buy.first.IsActive()) // Kiedy karty nie da się kupić, bo jest kogoś :P
 				{
 					CloseCard = true;
-					ShownCard = false; // pobiera zawsze czynsz bez domków! :)
+					ShownCard = false; 
 					imgButtons[1].activeButton(true);
 					if (DeedField* card = dynamic_cast<DeedField*>(FindedCard))
 					{
 						Player* owner = (card->GetCard<DeedCard>().GetOwner());
 						if (owner != nullptr && owner != activePlayer)
 						{
-							unsigned int price = card->GetCard<DeedCard>().Get_rents().Get_withoutHouse(); //!!
+							unsigned int price = card->GetCard<DeedCard>().Get_rents().Get_withoutHouse(); // pobiera zawsze czynsz bez domków! :)
+							owner->AddMoney(price);
+							activePlayer->SpendMoney(price);
+						}
+					}
+					else if (TrainField* card = dynamic_cast<TrainField*>(FindedCard))
+					{
+						Player* owner = (card->GetCard<TrainCard>().GetOwner());
+						if (owner != nullptr && owner != activePlayer)
+						{
+							unsigned int price = card->GetCard<TrainCard>().Get_Rent(); // POBIERA ZAWSZE ZA JEDEN DWORZEC
+							owner->AddMoney(price);
+							activePlayer->SpendMoney(price);
+						}
+					}
+					else if (SpecialField* card = dynamic_cast<SpecialField*>(FindedCard))
+					{
+						Player* owner = (card->GetCard<SpecialCard>().GetOwner());
+						if (owner != nullptr && owner != activePlayer)
+						{
+							unsigned int price = activePlayer->GetPawn().GetLastRollDice() * 4; // POBIERA ZAWSZE ZE JEDEN OBIEKT (*4)!
 							owner->AddMoney(price);
 							activePlayer->SpendMoney(price);
 						}
@@ -692,12 +712,10 @@ void Game::StartGame()
 		}
 		window.clear();
 		window.draw(bg);
-		for (auto& pawn : player)
+		for (auto& thisPlayer : player)
 		{
-			window.draw(pawn.GetPawn().GetSprite());
-			window.draw(pawn);
-			//for (auto card : pawn.GetCardStatus().GetVectorCards())
-				//window.draw(card.GetVertCard());
+			window.draw(thisPlayer.GetPawn().GetSprite());
+			window.draw(thisPlayer);
 		}
 		window.draw(LeftDice.GetSprite());
 		window.draw(RightDice.GetSprite());
@@ -729,11 +747,52 @@ void Game::StartGame()
 					buy.first.activeButton(true);
 
 				bid.first.activeButton(false); // Brak możliwości licytowania
-				window.draw(buy.first.GetSprite());
-				window.draw(buy.second.GetText());
-				window.draw(bid.first.GetSprite());
-				window.draw(bid.second.GetText());
 			}
+			else if (TrainField* card = dynamic_cast<TrainField*>(FindedCard))
+			{
+				Player* owner = (card->GetCard<TrainCard>().GetOwner());
+				if (owner != nullptr)
+				{
+					buy.first.activeButton(false);
+					//bid.first.activeButton(false);
+					if (owner != activePlayer)
+					{
+						unsigned int price = card->GetCard<TrainCard>().Get_Rent(); // Wyświetla tylko za posiadany jeden dworzec
+						textButtons[1].GetText().setString(L"Karta jest własnością " + owner->GetString() + "\nPobrano czynsz " + to_string(price) + L" zł");
+					}
+					else
+						textButtons[1].GetText().setString(L"Karta jest Twoją własnością!");
+				}
+				else
+					buy.first.activeButton(true);
+
+				bid.first.activeButton(false); // Brak możliwości licytowania
+			}
+			else if (SpecialField* card = dynamic_cast<SpecialField*>(FindedCard))
+			{
+				Player* owner = (card->GetCard<SpecialCard>().GetOwner());
+				if (owner != nullptr)
+				{
+					buy.first.activeButton(false);
+					//bid.first.activeButton(false);
+					if (owner != activePlayer)
+					{
+						unsigned int price = activePlayer->GetPawn().GetLastRollDice() * 4; // POBIERA ZAWSZE ZA POSIADANIE JEDNEGO OBIEKTU (*4)
+						textButtons[1].GetText().setString(L"Karta jest własnością " + owner->GetString() + "\nPobrano czynsz " + to_string(price) + L" zł");
+					}
+					else
+						textButtons[1].GetText().setString(L"Karta jest Twoją własnością!");
+				}
+				else
+					buy.first.activeButton(true);
+
+				bid.first.activeButton(false); // Brak możliwości licytowania
+			}
+			window.draw(buy.first.GetSprite());
+			window.draw(buy.second.GetText());
+			window.draw(bid.first.GetSprite());
+			window.draw(bid.second.GetText());
+
 			for (auto& elem : FindedCard->ShowTexts())
 				window.draw(elem.GetText()); 
 			ShownCard = true;
@@ -768,96 +827,106 @@ Field* FindField(std::list<Field*> list, const unsigned int ID)
 std::list<Field*> CreateList_ptrField(Graphics& graphics)
 {
 	Font& CardFont = graphics.GetCardFont();
-	Texture DeedCardTexture = graphics.GetDeedCardTexture();
+	Texture CardTexture = graphics.GetCardTexture();
 
 	std::list<Field*> fields;
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA KONOPACKA", CardFont, Rent(2, 10, 30, 90, 160), 60, 50, 50, 30), DeedCardTexture, Color(78, 61, 113), 1
+		DeedCard(L"ULICA KONOPACKA", CardFont, Rent(2, 10, 30, 90, 160), 60, 50, 50, 30), CardTexture, Color(78, 61, 113), 1
 		));
 	//// kasa społeczna 2
 
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA STALOWA", CardFont, Rent(4, 20, 60, 180, 320), 60, 50, 50, 30), DeedCardTexture, Color(78, 61, 113), 3
+		DeedCard(L"ULICA STALOWA", CardFont, Rent(4, 20, 60, 180, 320), 60, 50, 50, 30), CardTexture, Color(78, 61, 113), 3
 		));
 	////fields.emplace_back(4); -200ZŁ 4
-	///*fields.emplace_back(new TrainField(
-	//	SpecialCard("Dworzec Zachodni", 200, 100), 25, 5
-	//	));*/
+	fields.emplace_back(new TrainField(
+		TrainCard("DWORZEC ZACHODNI", CardFont, 200, 25, 100), CardTexture, graphics.GetTrainLogoTexture(), 5
+		));
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA RADZYMIŃSKA", CardFont, Rent(6, 30, 90, 270, 400), 100, 50, 50, 50), DeedCardTexture, Color(178, 194, 228), 6
+		DeedCard(L"ULICA RADZYMIŃSKA", CardFont, Rent(6, 30, 90, 270, 400), 100, 50, 50, 50), CardTexture, Color(178, 194, 228), 6
 		));
 
 	//// karta szansy 7
 
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA JAGIELLOŃSKA", CardFont, Rent(6, 30, 90, 270, 400), 100, 50, 50, 50), DeedCardTexture, Color(178, 194, 228), 8
+		DeedCard(L"ULICA JAGIELLOŃSKA", CardFont, Rent(6, 30, 90, 270, 400), 100, 50, 50, 50), CardTexture, Color(178, 194, 228), 8
 		));
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA TARGOWA", CardFont, Rent(8, 40, 100, 300, 450), 120, 50, 50, 60), DeedCardTexture, Color(178, 194, 228), 9
+		DeedCard(L"ULICA TARGOWA", CardFont, Rent(8, 40, 100, 300, 450), 120, 50, 50, 60), CardTexture, Color(178, 194, 228), 9
 		));
-	//10 NIC
+	// 10 NIC
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA PŁOWIECKA", CardFont, Rent(10, 50, 150, 450, 625), 140, 100, 100, 70), DeedCardTexture, Color(177, 50, 95), 11
+		DeedCard(L"ULICA PŁOWIECKA", CardFont, Rent(10, 50, 150, 450, 625), 140, 100, 100, 70), CardTexture, Color(177, 50, 95), 11
 		));
-	// 12 ELEKTROWNIA
-	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA MARSA", CardFont, Rent(10, 50, 150, 450, 625), 140, 100, 100, 70), DeedCardTexture, Color(177, 50, 95), 13
+	fields.emplace_back(new SpecialField(
+		SpecialCard(L"ELEKTROWNIA", CardFont, 150, 75), CardTexture, graphics.GetPowerStationLogoTexture(), 12 
 		));
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA GROCHOWSKA", CardFont, Rent(12, 60, 180, 500, 700), 160, 100, 100, 80), DeedCardTexture, Color(177, 50, 95), 14
+		DeedCard(L"ULICA MARSA", CardFont, Rent(10, 50, 150, 450, 625), 140, 100, 100, 70), CardTexture, Color(177, 50, 95), 13
 		));
-	//DWORZEC 15
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA OBOZOWA", CardFont, Rent(14, 70, 200, 550, 750), 180, 100, 100, 90), DeedCardTexture, Color(243, 141, 77), 16
+		DeedCard(L"ULICA GROCHOWSKA", CardFont, Rent(12, 60, 180, 500, 700), 160, 100, 100, 80), CardTexture, Color(177, 50, 95), 14
+		));
+	fields.emplace_back(new TrainField(
+		TrainCard(L"DWORZEC GDAŃSKI", CardFont, 200, 25, 100), CardTexture, graphics.GetTrainLogoTexture(), 15
+		));
+	fields.emplace_back(new DeedField(
+		DeedCard(L"ULICA OBOZOWA", CardFont, Rent(14, 70, 200, 550, 750), 180, 100, 100, 90), CardTexture, Color(243, 141, 77), 16
 		));
 	//KASA SPOŁECZNA 17
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA GÓRCZEWSKA", CardFont, Rent(14, 70, 200, 550, 750), 180, 100, 100, 90), DeedCardTexture, Color(243, 141, 77), 18
+		DeedCard(L"ULICA GÓRCZEWSKA", CardFont, Rent(14, 70, 200, 550, 750), 180, 100, 100, 90), CardTexture, Color(243, 141, 77), 18
 		));
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA WOLSKA", CardFont, Rent(16, 80, 220, 600, 800), 200, 100, 100, 100), DeedCardTexture, Color(243, 141, 77), 19
+		DeedCard(L"ULICA WOLSKA", CardFont, Rent(16, 80, 220, 600, 800), 200, 100, 100, 100), CardTexture, Color(243, 141, 77), 19
 		));
 	//20 NIC
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA MICKIEWICZA", CardFont, Rent(18, 90, 250, 700, 875), 220, 150, 150, 110), DeedCardTexture, Color(239, 59, 58), 21
+		DeedCard(L"ULICA MICKIEWICZA", CardFont, Rent(18, 90, 250, 700, 875), 220, 150, 150, 110), CardTexture, Color(239, 59, 58), 21
 		));
 	//KARTA SZANSY 22
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA SŁOWACKIEGO", CardFont, Rent(18, 90, 250, 700, 875), 220, 150, 150, 110), DeedCardTexture, Color(239, 59, 58), 23
+		DeedCard(L"ULICA SŁOWACKIEGO", CardFont, Rent(18, 90, 250, 700, 875), 220, 150, 150, 110), CardTexture, Color(239, 59, 58), 23
 		));
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA WILSONA", CardFont, Rent(20, 100, 300, 750, 925), 240, 150, 150, 120), DeedCardTexture, Color(239, 59, 58), 24
+		DeedCard(L"ULICA WILSONA", CardFont, Rent(20, 100, 300, 750, 925), 240, 150, 150, 120), CardTexture, Color(239, 59, 58), 24
 		));
-	// DWORZEC 25
-	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA ŚWIĘTOKRZYSKA", CardFont, Rent(22, 110, 330, 800, 975), 260, 150, 150, 130), DeedCardTexture, Color(237, 247, 140), 26
+	fields.emplace_back(new TrainField(
+		TrainCard("DWORZEC WSCHODNI", CardFont, 200, 25, 100), CardTexture, graphics.GetTrainLogoTexture(), 25
 		));
 	fields.emplace_back(new DeedField(
-		DeedCard(L"KRAKOWSKIE PRZEDMIEŚCIE", CardFont, Rent(22, 110, 330, 800, 975), 260, 150, 150, 130), DeedCardTexture, Color(237, 247, 140), 27
+		DeedCard(L"ULICA ŚWIĘTOKRZYSKA", CardFont, Rent(22, 110, 330, 800, 975), 260, 150, 150, 130), CardTexture, Color(237, 247, 140), 26
 		));
-	//WODOCIAG 28
 	fields.emplace_back(new DeedField(
-		DeedCard(L"NOWY ŚWIAT", CardFont, Rent(24, 120, 360, 850, 1025), 280, 150, 150, 140), DeedCardTexture, Color(237, 247, 140), 29
+		DeedCard(L"KRAKOWSKIE PRZEDMIEŚCIE", CardFont, Rent(22, 110, 330, 800, 975), 260, 150, 150, 130), CardTexture, Color(237, 247, 140), 27
+		));
+	fields.emplace_back(new SpecialField(
+		SpecialCard(L"WODOCIĄGI", CardFont, 150, 75), CardTexture, graphics.GetWaterSupplyLogoTexture(), 28
+		));
+	fields.emplace_back(new DeedField(
+		DeedCard(L"NOWY ŚWIAT", CardFont, Rent(24, 120, 360, 850, 1025), 280, 150, 150, 140), CardTexture, Color(237, 247, 140), 29
 		));
 	//GO TO JAIL! 30
 	fields.emplace_back(new DeedField(
-		DeedCard(L"PLAC TRZECH KRZYŻY", CardFont, Rent(26, 130, 390, 900, 1100), 300, 200, 200, 150), DeedCardTexture, Color(83, 148, 114), 31
+		DeedCard(L"PLAC TRZECH KRZYŻY", CardFont, Rent(26, 130, 390, 900, 1100), 300, 200, 200, 150), CardTexture, Color(83, 148, 114), 31
 		));
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ULICA MARSZAŁKOWSKA", CardFont, Rent(26, 130, 390, 900, 1100), 300, 200, 200, 150), DeedCardTexture, Color(83, 148, 114), 32
+		DeedCard(L"ULICA MARSZAŁKOWSKA", CardFont, Rent(26, 130, 390, 900, 1100), 300, 200, 200, 150), CardTexture, Color(83, 148, 114), 32
 		));
 	//KASA SPOŁECZNA 33
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ALEJE JEROZOLIMSKIE", CardFont, Rent(28, 150, 450, 1000, 1200), 320, 200, 200, 160), DeedCardTexture, Color(83, 148, 114), 34
+		DeedCard(L"ALEJE JEROZOLIMSKIE", CardFont, Rent(28, 150, 450, 1000, 1200), 320, 200, 200, 160), CardTexture, Color(83, 148, 114), 34
 		));
-	//DWORZEC 35
+	fields.emplace_back(new TrainField(
+		TrainCard("DWORZEC CENTRALNY", CardFont, 200, 25, 100), CardTexture, graphics.GetTrainLogoTexture(), 35
+		));
 	//SZANSA 36
 	fields.emplace_back(new DeedField(
-		DeedCard(L"BELWEDERSKA", CardFont, Rent(35, 175, 500, 1100, 1300), 350, 200, 200, 175), DeedCardTexture, Color(56, 79, 146), 37
+		DeedCard(L"BELWEDERSKA", CardFont, Rent(35, 175, 500, 1100, 1300), 350, 200, 200, 175), CardTexture, Color(56, 79, 146), 37
 		));
 	//PODATEK -100ZŁ 38
 	fields.emplace_back(new DeedField(
-		DeedCard(L"ALEJE UJAZDOWSKIE", CardFont, Rent(50, 200, 600, 1400, 1700), 400, 200, 200, 200), DeedCardTexture, Color(56, 79, 146), 39
+		DeedCard(L"ALEJE UJAZDOWSKIE", CardFont, Rent(50, 200, 600, 1400, 1700), 400, 200, 200, 200), CardTexture, Color(56, 79, 146), 39
 		));
 	//FindField(fields, 6)->Action();
 	return fields;

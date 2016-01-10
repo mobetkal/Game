@@ -8,8 +8,13 @@ class Graphics
 	sf::Texture twoPlayers, threePlayers, fourPlayers, twoPlayersHover, threePlayersHover, fourPlayersHover;
 	sf::Texture frame, frame_active, frame_wrong;
 	sf::Texture button_enable, button_disable, button_enable_short, button_disable_short;
-	std::vector<sf::Texture> pawns, pawns_forGame, dice, MiniCard;
-	sf::Texture DeedCardTexure;// , MiniCard;
+	std::vector<sf::Texture> pawns, pawns_forGame, dice;
+
+	sf::Texture CardTexure;
+	std::vector<sf::Texture> MiniCard;
+	sf::Texture TrainLogo;
+	sf::Texture PowerStationLogo;
+	sf::Texture WaterSupplyLogo;
 
 	sf::Font PalabFont;
 	sf::Font MenuFont;
@@ -44,7 +49,10 @@ public:
 	sf::Texture& GetButtonEnableShort(){ return button_enable_short; }
 	sf::Texture& GetButtonDisableShort(){ return button_disable_short; }
 
-	sf::Texture& GetDeedCardTexture(){ return DeedCardTexure; }
+	sf::Texture& GetCardTexture(){ return CardTexure; }
+	sf::Texture& GetTrainLogoTexture(){ return TrainLogo; }
+	sf::Texture& GetPowerStationLogoTexture(){ return PowerStationLogo; }
+	sf::Texture& GetWaterSupplyLogoTexture(){ return WaterSupplyLogo; }
 	std::vector<sf::Texture>& GetMiniCard()	{ return MiniCard; }
 
 	sf::Font& GetPalabFont(){ return PalabFont; }
@@ -127,7 +135,13 @@ public:
 			StartGame = false;
 
 		// Loading Card Texture
-		if (!DeedCardTexure.loadFromFile("graphics/deedcard.png"))
+		if (!CardTexure.loadFromFile("graphics/card.png"))
+			StartGame = false;
+		if (!TrainLogo.loadFromFile("graphics/TrainLogo.png"))
+			StartGame = false;
+		if (!PowerStationLogo.loadFromFile("graphics/PowerStationLogo.png"))
+			StartGame = false;
+		if (!WaterSupplyLogo.loadFromFile("graphics/WaterSupplyLogo.png"))
 			StartGame = false;
 
 		//Loading Mini Cards Texture

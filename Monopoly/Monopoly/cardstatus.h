@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 
-class Card
+class MiniCard
 {
 	sf::VertexArray VertCard;
 	sf::Color Color;
@@ -16,7 +16,7 @@ public:
 	sf::VertexArray& GetVertCard(){ return VertCard; }
 	sf::Texture& GetMiniCardTexture() { return Texture; }
 	bool GetBusy(){ return busy; }
-	Card(const sf::Texture& Texture, const sf::Color& Color, const float& x, const float& y, bool busy = false)
+	MiniCard(const sf::Texture& Texture, const sf::Color& Color, const float& x, const float& y, bool busy = false)
 		:
 		VertCard(sf::Quads, 4),
 		Color(Color),
@@ -53,12 +53,12 @@ public:
 
 class CardStatus
 {
-	std::vector<Card> Cards;
+	std::vector<MiniCard> Cards;
 	unsigned int playerID;
 	int size;
 
 public:
-	std::vector<Card>& GetVectorCards(){ return Cards; }
+	std::vector<MiniCard>& GetVectorCards(){ return Cards; }
 
 	CardStatus(const sf::Texture& Texture, const int size, const sf::Color Color, const float x, const float y, unsigned int& playerID)
 		:

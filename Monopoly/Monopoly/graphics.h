@@ -11,10 +11,13 @@ class Graphics
 	std::vector<sf::Texture> pawns, pawns_forGame, dice;
 
 	sf::Texture CardTexure;
+	sf::Texture RedCardTexure;
 	std::vector<sf::Texture> MiniCard;
 	sf::Texture TrainLogo;
 	sf::Texture PowerStationLogo;
 	sf::Texture WaterSupplyLogo;
+	sf::Texture ChanceLogo;
+	sf::Texture ChestLogo;
 
 	sf::Font PalabFont;
 	sf::Font MenuFont;
@@ -50,9 +53,12 @@ public:
 	sf::Texture& GetButtonDisableShort(){ return button_disable_short; }
 
 	sf::Texture& GetCardTexture(){ return CardTexure; }
+	sf::Texture& GetRedCardTexture(){ return RedCardTexure; }
 	sf::Texture& GetTrainLogoTexture(){ return TrainLogo; }
 	sf::Texture& GetPowerStationLogoTexture(){ return PowerStationLogo; }
 	sf::Texture& GetWaterSupplyLogoTexture(){ return WaterSupplyLogo; }
+	sf::Texture& GetChestLogoTexture(){ return ChestLogo; }
+	sf::Texture& GetChanceLogoTexture(){ return ChanceLogo; }
 	std::vector<sf::Texture>& GetMiniCard()	{ return MiniCard; }
 
 	sf::Font& GetPalabFont(){ return PalabFont; }
@@ -137,11 +143,17 @@ public:
 		// Loading Card Texture
 		if (!CardTexure.loadFromFile("graphics/card.png"))
 			StartGame = false;
+		if (!RedCardTexure.loadFromFile("graphics/RedCard.png"))
+			StartGame = false;
 		if (!TrainLogo.loadFromFile("graphics/TrainLogo.png"))
 			StartGame = false;
 		if (!PowerStationLogo.loadFromFile("graphics/PowerStationLogo.png"))
 			StartGame = false;
 		if (!WaterSupplyLogo.loadFromFile("graphics/WaterSupplyLogo.png"))
+			StartGame = false;
+		if (!ChestLogo.loadFromFile("graphics/chest.png"))
+			StartGame = false;
+		if (!ChanceLogo.loadFromFile("graphics/chance.png"))
 			StartGame = false;
 
 		//Loading Mini Cards Texture

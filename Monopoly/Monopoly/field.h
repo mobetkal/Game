@@ -15,23 +15,63 @@ public:
 	Field(unsigned int area) : area(area){}
 	virtual ~Field(){}
 	unsigned int GetArea(){ return area; }
-	virtual void ActionBuy(Player& player) = 0;
+	virtual void Action(Player& player) = 0;
 	virtual std::vector<ButtonSprite>& ShowGraphics() = 0;
 	virtual std::vector<ButtonText>& ShowTexts() = 0;
-	template<class Card>
-	Card GetCard(){ return card; }
 };
 
 class ChanceField : public Field
 {
-	std::list<Chance>* cards;
+	std::list<Chance> cards;
+	std::vector<ButtonSprite> graphics;
+	std::vector<ButtonText> texts;
+	sf::Texture RedCardTexture;
+	sf::Font CardFont;
+	sf::Texture SpecialTexture;
+	bool visibility;
 
 public:
-	ChanceField(std::list<Chance>* cards, const unsigned int& area) : cards(cards), Field(area){}
-	void ActionBuy(Player& player) override
+	ChanceField(std::list<Chance>& cards, Graphics& gameGraphics, const unsigned int& area)
+		: 
+		cards(cards), 
+		RedCardTexture(gameGraphics.GetRedCardTexture()),
+		CardFont(gameGraphics.GetCardFont()),
+		Field(area),
+		visibility(false),
+		SpecialTexture(gameGraphics.GetChanceLogoTexture())
+	{
+		this->RedCardTexture.setSmooth(true);
+		this->SpecialTexture.setSmooth(true);
+
+		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", this->CardFont, 12), sf::Color::Black, 478, true));
+
+		graphics.emplace_back(this->RedCardTexture, (700 - 450) / 2, (700 - 290) / 2);
+		graphics.emplace_back(this->SpecialTexture, (700 - 450) / 2, (700 - 290) / 2);
+	}
+	bool isVisible(){ return visibility; }
+	void SetVisibility(bool status){ visibility = status; }
+	Chance& GetCard() { return cards.front(); }
+	void ShowDescription()
+	{
+		graphics.pop_back();
+		if (!cards.front().cardWasUsed())
+			texts.emplace_back(ButtonText(sf::Text(cards.front().GetDescrition(), CardFont, 14), sf::Color::White, 378, true));
+		//else
+			//ReloadChanceList(cards);
+	}
+	void AfterShowDescription()
+	{
+		graphics.emplace_back(this->SpecialTexture, (700 - 450) / 2, (700 - 290) / 2);
+		texts.pop_back();
+		cards.emplace_back(cards.front().GetDescrition(), true);
+		cards.pop_front();
+	}
+	void Action(Player& player) override
 	{
 		//cout << "Karta szansy" << endl;
 	}
+	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
+	std::vector<ButtonText>& ShowTexts() override { return texts; }
 };
 
 class SpecialField : public Field
@@ -71,9 +111,8 @@ public:
 		graphics.emplace_back(this->CardTexture, (700 - 290) / 2, 125.0f);
 		graphics.emplace_back(this->SpecialTexture, (700 - 220) / 2, 140.0f);
 	}
-	template<class Card>
-	Card& GetCard() { return card; }
-	void ActionBuy(Player& player) override
+	SpecialCard& GetCard() { return card; }
+	void Action(Player& player) override
 	{
 		if (card.GetOwner() == nullptr)
 		{
@@ -118,9 +157,8 @@ public:
 		graphics.emplace_back(this->CardTexture, (700 - 290) / 2, 125.0f);
 		graphics.emplace_back(this->Train, (700 - 195) / 2, 150.0f);
 	}
-	template<class Card>
-	Card& GetCard() { return card; }
-	void ActionBuy(Player& player) override
+	TrainCard& GetCard() { return card; }
+	void Action(Player& player) override
 	{
 		if (card.GetOwner() == nullptr)
 		{
@@ -177,9 +215,8 @@ public:
 		graphics.emplace_back(this->CardTexture, (700 - 290) / 2, 125.0f);
 	}
 	sf::VertexArray& GetColor(){ return Color; }
-	template<class Card>
-	Card& GetCard() { return card; }
-	void ActionBuy(Player& player) override
+	DeedCard& GetCard() { return card; }
+	void Action(Player& player) override
 	{
 		if (card.GetOwner() == nullptr)
 		{
@@ -193,26 +230,6 @@ public:
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override {	return texts; }
 };
-
-//class DoSmthField : public Field
-//{
-//	ButtonSprite Sprite;
-//	ButtonText Description;
-//	sf::Texture CardTexture;
-//	void(*function)(int);
-//public:
-//	DoSmthField(const sf::Texture& CardTexture, void(*function)(int), const unsigned int& area) 
-//		: 
-//		Field(area),
-//		function(function)
-//	{
-//		this->function(2);
-//	}
-//	void Action() //override
-//	{
-//		function(2)
-//	}
-//};
 
 sf::Vector2i ChooseCard(unsigned int area)
 {

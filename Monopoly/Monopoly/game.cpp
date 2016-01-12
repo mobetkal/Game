@@ -22,6 +22,8 @@ using namespace sf;
 
 std::list<Field*> CreateList_ptrField(Graphics& graphics);
 Field* FindField(std::list<Field*> list, const unsigned int ID);
+//list<Chance> CreateChanceList();
+void CreateChanceList(list<Chance>& chanceCard);
 
 Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None), graphics(Graphics())
 {
@@ -448,6 +450,7 @@ void Game::StartGame()
 	list<Field*> fields = CreateList_ptrField(graphics);
 	bool ShownCard = false;
 	bool CloseCard = false;
+	bool ShownDescription = false;
 
 	vector<ButtonSprite> imgButtons;
 	imgButtons.emplace_back(graphics.GetButtonEnable(), graphics.GetButtonDisable(), 936.0f, 55.0f);
@@ -498,7 +501,7 @@ void Game::StartGame()
 
 		if (activePlayer->IsActiveField())
 		{
-			FindedCard = FindField(fields, activePlayer->GetPawn().GetArea());
+			FindedCard = FindField(fields, 7); //activePlayer->GetPawn().GetArea()
 			if (!FindedCard)
 				activePlayer->SetActiveField(false);
 		}
@@ -523,6 +526,10 @@ void Game::StartGame()
 		if (button.GetSprite().getGlobalBounds().contains(mouse))
 		{
 			hoverImgButton = &button;
+		}
+		if (dynamic_cast<ChanceField*>(FindedCard) && FindedCard->ShowGraphics().begin()->GetSprite().getGlobalBounds().contains(mouse))
+		{
+			hoverImgButton = &(FindedCard->ShowGraphics()[0]);
 		}
 		if (activePlayer->IsActiveField())
 		{
@@ -563,7 +570,7 @@ void Game::StartGame()
 			{
 				if (hoverImgButton == &buy.first && ShownCard && buy.first.IsActive())
 				{
-					FindedCard->ActionBuy(*activePlayer);
+					FindedCard->Action(*activePlayer);
 					ShownCard = false;
 					activePlayer->SetActiveField(false);
 				}
@@ -577,39 +584,63 @@ void Game::StartGame()
 
 				if (ShownCard && !bid.first.IsActive() && !buy.first.IsActive()) // Kiedy karty nie da się kupić, bo jest kogoś :P
 				{
-					CloseCard = true;
-					ShownCard = false; 
-					imgButtons[1].activeButton(true);
-					if (DeedField* card = dynamic_cast<DeedField*>(FindedCard))
+					if (!dynamic_cast<ChanceField*>(FindedCard))// && !dynamic_cast<ChanceField*>(FindedCard))
 					{
-						Player* owner = (card->GetCard<DeedCard>().GetOwner());
-						if (owner != nullptr && owner != activePlayer)
+						CloseCard = true;
+						ShownCard = false;
+						imgButtons[1].activeButton(true);
+						if (DeedField* card = dynamic_cast<DeedField*>(FindedCard))
 						{
-							unsigned int price = card->GetCard<DeedCard>().Get_rents().Get_withoutHouse(); // pobiera zawsze czynsz bez domków! :)
-							owner->AddMoney(price);
-							activePlayer->SpendMoney(price);
+							Player* owner = (card->GetCard().GetOwner());
+							if (owner != nullptr && owner != activePlayer)
+							{
+								unsigned int price = card->GetCard().Get_rents().Get_withoutHouse(); // pobiera zawsze czynsz bez domków! :)
+								owner->AddMoney(price);
+								activePlayer->SpendMoney(price);
+							}
+						}
+						else if (TrainField* card = dynamic_cast<TrainField*>(FindedCard))
+						{
+							Player* owner = (card->GetCard().GetOwner());
+							if (owner != nullptr && owner != activePlayer)
+							{
+								unsigned int price = card->GetCard().Get_Rent(); // POBIERA ZAWSZE ZA JEDEN DWORZEC
+								owner->AddMoney(price);
+								activePlayer->SpendMoney(price);
+							}
+						}
+						else if (SpecialField* card = dynamic_cast<SpecialField*>(FindedCard))
+						{
+							Player* owner = (card->GetCard().GetOwner());
+							if (owner != nullptr && owner != activePlayer)
+							{
+								unsigned int price = activePlayer->GetPawn().GetLastRollDice() * 4; // POBIERA ZAWSZE ZE JEDEN OBIEKT (*4)!
+								owner->AddMoney(price);
+								activePlayer->SpendMoney(price);
+							}
 						}
 					}
-					else if (TrainField* card = dynamic_cast<TrainField*>(FindedCard))
+					else
 					{
-						Player* owner = (card->GetCard<TrainCard>().GetOwner());
-						if (owner != nullptr && owner != activePlayer)
+						ChanceField* card = dynamic_cast<ChanceField*>(FindedCard);
+						if (hoverImgButton == &(FindedCard->ShowGraphics()[0]) && !card->isVisible())
 						{
-							unsigned int price = card->GetCard<TrainCard>().Get_Rent(); // POBIERA ZAWSZE ZA JEDEN DWORZEC
-							owner->AddMoney(price);
-							activePlayer->SpendMoney(price);
+							card->ShowDescription();
+							card->SetVisibility(true);
 						}
-					}
-					else if (SpecialField* card = dynamic_cast<SpecialField*>(FindedCard))
-					{
-						Player* owner = (card->GetCard<SpecialCard>().GetOwner());
-						if (owner != nullptr && owner != activePlayer)
+						else 
 						{
-							unsigned int price = activePlayer->GetPawn().GetLastRollDice() * 4; // POBIERA ZAWSZE ZE JEDEN OBIEKT (*4)!
-							owner->AddMoney(price);
-							activePlayer->SpendMoney(price);
+							if (card->isVisible())
+							{
+								CloseCard = true;
+								card->SetVisibility(false);
+								card->AfterShowDescription();
+								//Dodać zmianę karty :)
+							}
 						}
+							
 					}
+
 				}
 
 				if (hoverImgButton == &imgButtons[0] && !activePlayer->ThrewDoublet() && imgButtons[0].IsActive())
@@ -730,14 +761,14 @@ void Game::StartGame()
 			if (DeedField* card = dynamic_cast<DeedField*>(FindedCard))
 			{
 				window.draw(card->GetColor());
-				Player* owner = (card->GetCard<DeedCard>().GetOwner());
+				Player* owner = (card->GetCard().GetOwner());
 				if (owner != nullptr)
 				{
 					buy.first.activeButton(false);
 					//bid.first.activeButton(false);
 					if (owner != activePlayer)
 					{
-						unsigned int price = card->GetCard<DeedCard>().Get_rents().Get_withoutHouse();
+						unsigned int price = card->GetCard().Get_rents().Get_withoutHouse();
 						textButtons[1].GetText().setString(L"Karta jest własnością " + owner->GetString() + "\nPobrano czynsz " + to_string(price) + L" zł");
 					}
 					else
@@ -750,14 +781,14 @@ void Game::StartGame()
 			}
 			else if (TrainField* card = dynamic_cast<TrainField*>(FindedCard))
 			{
-				Player* owner = (card->GetCard<TrainCard>().GetOwner());
+				Player* owner = (card->GetCard().GetOwner());
 				if (owner != nullptr)
 				{
 					buy.first.activeButton(false);
 					//bid.first.activeButton(false);
 					if (owner != activePlayer)
 					{
-						unsigned int price = card->GetCard<TrainCard>().Get_Rent(); // Wyświetla tylko za posiadany jeden dworzec
+						unsigned int price = card->GetCard().Get_Rent(); // Wyświetla tylko za posiadany jeden dworzec
 						textButtons[1].GetText().setString(L"Karta jest własnością " + owner->GetString() + "\nPobrano czynsz " + to_string(price) + L" zł");
 					}
 					else
@@ -770,7 +801,7 @@ void Game::StartGame()
 			}
 			else if (SpecialField* card = dynamic_cast<SpecialField*>(FindedCard))
 			{
-				Player* owner = (card->GetCard<SpecialCard>().GetOwner());
+				Player* owner = (card->GetCard().GetOwner());
 				if (owner != nullptr)
 				{
 					buy.first.activeButton(false);
@@ -788,11 +819,18 @@ void Game::StartGame()
 
 				bid.first.activeButton(false); // Brak możliwości licytowania
 			}
-			window.draw(buy.first.GetSprite());
-			window.draw(buy.second.GetText());
-			window.draw(bid.first.GetSprite());
-			window.draw(bid.second.GetText());
-
+			if (!dynamic_cast<ChanceField*>(FindedCard)) // Dodać wyjątek dla kart społecznych
+			{
+				window.draw(buy.first.GetSprite());
+				window.draw(buy.second.GetText());
+				window.draw(bid.first.GetSprite());
+				window.draw(bid.second.GetText());
+			}
+			else
+			{
+				bid.first.activeButton(false);
+				buy.first.activeButton(false);
+			}
 			for (auto& elem : FindedCard->ShowTexts())
 				window.draw(elem.GetText()); 
 			ShownCard = true;
@@ -828,6 +866,8 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 {
 	Font& CardFont = graphics.GetCardFont();
 	Texture CardTexture = graphics.GetCardTexture();
+	list<Chance> chanceList; 
+	CreateChanceList(chanceList);
 
 	std::list<Field*> fields;
 	fields.emplace_back(new DeedField(
@@ -847,6 +887,10 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 		));
 
 	//// karta szansy 7
+	fields.emplace_back(new ChanceField(
+		chanceList, graphics, 7
+		));
+
 
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ULICA JAGIELLOŃSKA", CardFont, Rent(6, 30, 90, 270, 400), 100, 50, 50, 50), CardTexture, Color(178, 194, 228), 8
@@ -928,6 +972,15 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ALEJE UJAZDOWSKIE", CardFont, Rent(50, 200, 600, 1400, 1700), 400, 200, 200, 200), CardTexture, Color(56, 79, 146), 39
 		));
-	//FindField(fields, 6)->Action();
 	return fields;
+}
+
+void CreateChanceList(list<Chance>& chanceCard)
+{
+	chanceCard.emplace_back(L"Teścik kochani moi");
+	chanceCard.emplace_back(L"Teścik2 kochani moi");
+	chanceCard.emplace_back(L"Teścik3 kochani moi");
+	chanceCard.emplace_back(L"Teścik4 kochani moi");
+	chanceCard.emplace_back(L"Teścik5 kochani moi");
+
 }

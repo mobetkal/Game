@@ -10,16 +10,21 @@ class Chance
 {
 	sf::String description;
 	bool wasUsed;
+	//bool visibility;
 public:
-	Chance(const sf::String& description) 
+	Chance(const sf::String& description, bool wasUsed = false) 
 		:
 		description(description),
-		wasUsed(false)
+		wasUsed(wasUsed)//,
+		//visibility(false)
 	{
 		
 	}
 	sf::String& GetDescrition(){ return description; }
 	bool cardWasUsed(){ return wasUsed; }
+	void SetUsed(bool status){ wasUsed = status; }
+	//bool isVisible(){ return visibility; }
+	//void SetVisibility(bool status){ visibility = status; }
 };
 
 class DeedCard

@@ -4,8 +4,13 @@
 #include "buttontext.h"
 #include <string>
 #include <iomanip>
+#include <algorithm>
+//#include <cstdlib> 
+#include <list>
 
 sf::Vector2i ChooseCard(unsigned int area);
+void ReloadCardsList(std::vector<Chance>& cards);
+//int myrandom(int i) { return std::rand() % i; }
 
 class Field : public sf::Drawable, public sf::Transformable
 {
@@ -28,7 +33,7 @@ public:
 
 class ChanceField : public Field
 {
-	std::list<Chance> cards;
+	std::vector<Chance> cards;				// BRAK MOŻLIWOŚCI LOSOWANIA KART Z JEDNEJ TALII
 	std::vector<ButtonSprite> graphics;
 	std::vector<ButtonText> texts;
 	sf::Texture RedCardTexture;
@@ -45,7 +50,7 @@ class ChanceField : public Field
 	}
 
 public:
-	ChanceField(std::list<Chance>& cards, Graphics& gameGraphics, const unsigned int& area)
+	ChanceField(std::vector<Chance>& cards, Graphics& gameGraphics, const unsigned int& area)
 		: 
 		cards(cards), 
 		RedCardTexture(gameGraphics.GetRedCardTexture()),
@@ -70,18 +75,20 @@ public:
 		graphics.pop_back();
 		if (!cards.front().cardWasUsed())
 			texts.emplace_back(ButtonText(sf::Text(cards.front().GetDescrition(), CardFont, 14), sf::Color::White, 378, true));
-		//else
-			//ReloadChanceList(cards);
-	}
-	void ReloadChanceList()
-	{
+		else
+		{
+			ReloadCardsList(cards);
+			texts.emplace_back(ButtonText(sf::Text(cards.front().GetDescrition(), CardFont, 14), sf::Color::White, 378, true));
+		}
+			
 	}
 	void AfterShowDescription()
 	{
 		graphics.emplace_back(this->SpecialTexture, (700 - 450) / 2, (700 - 290) / 2);
+		cards.emplace_back(texts.back().GetText().getString(), true);
 		texts.pop_back();
-		cards.emplace_back(cards.front().GetDescrition(), true);
-		cards.pop_front();
+		cards.erase(cards.begin());
+		//cards.pop_front();
 	}
 	void Action(Player& player) override
 	{
@@ -272,6 +279,13 @@ public:
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override {	return texts; }
 };
+
+void ReloadCardsList(std::vector<Chance>& cards)
+{
+	std::random_shuffle(cards.begin(), cards.end());
+	for (auto& card : cards)
+		card.SetUsed(false);
+}
 
 sf::Vector2i ChooseCard(unsigned int area)
 {

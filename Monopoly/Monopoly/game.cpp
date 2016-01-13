@@ -23,7 +23,7 @@ using namespace sf;
 std::list<Field*> CreateList_ptrField(Graphics& graphics);
 Field* FindField(std::list<Field*> list, const unsigned int ID);
 //list<Chance> CreateChanceList();
-void CreateChanceList(list<Chance>& chanceCard);
+void CreateChanceList(vector<Chance>& chanceCard);
 
 Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None), graphics(Graphics())
 {
@@ -498,7 +498,7 @@ void Game::StartGame()
 
 		if (activePlayer->IsActiveField())
 		{
-			FindedCard = FindField(fields, 28); //activePlayer->GetPawn().GetArea()
+			FindedCard = FindField(fields, activePlayer->GetPawn().GetArea()); //
 			if (!FindedCard)
 				activePlayer->SetActiveField(false);
 		}
@@ -581,9 +581,6 @@ void Game::StartGame()
 
 				if (ShownCard && !bid.first.IsActive() && !buy.first.IsActive()) // Kiedy karty nie da się kupić, bo jest kogoś :P
 				{
-					CloseCard = true;
-					ShownCard = false;
-					imgButtons[1].activeButton(true);
 
 					if (!dynamic_cast<ChanceField*>(FindedCard)) // && !dynamic_cast<CommunityField*>(FindedCard)
 					{
@@ -610,6 +607,9 @@ void Game::StartGame()
 							owner->AddMoney(price);
 							activePlayer->SpendMoney(price);
 						}
+						CloseCard = true;
+						ShownCard = false;
+						imgButtons[1].activeButton(true);
 					}
 					else
 					{
@@ -619,10 +619,13 @@ void Game::StartGame()
 							{
 								card->ShowDescription();
 								card->SetVisibility(true);
+								CloseCard = false;
 							}
 							else if (card->isVisible())
 							{
 								CloseCard = true;
+								ShownCard = false;
+								imgButtons[1].activeButton(true);
 								card->SetVisibility(false);
 								card->AfterShowDescription();
 								//Dodać zmianę karty :)
@@ -823,7 +826,7 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 {
 	Font& CardFont = graphics.GetCardFont();
 	Texture CardTexture = graphics.GetCardTexture();
-	list<Chance> chanceList; 
+	vector<Chance> chanceList; 
 	CreateChanceList(chanceList);
 
 	std::list<Field*> fields;
@@ -922,6 +925,11 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 		TrainCard("DWORZEC CENTRALNY", CardFont, 200, 25, 100), graphics, 35
 		));
 	//SZANSA 36
+
+	fields.emplace_back(new ChanceField(
+		chanceList, graphics, 36
+		));
+
 	fields.emplace_back(new DeedField(
 		DeedCard(L"BELWEDERSKA", CardFont, Rent(35, 175, 500, 1100, 1300), 350, 200, 200, 175), graphics, Color(56, 79, 146), 37
 		));
@@ -932,12 +940,12 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 	return fields;
 }
 
-void CreateChanceList(list<Chance>& chanceCard)
+void CreateChanceList(vector<Chance>& chanceCard)
 {
-	chanceCard.emplace_back(L"Teścik kochani moi");
+	chanceCard.emplace_back(L"Teścik1 kochani moi");
 	chanceCard.emplace_back(L"Teścik2 kochani moi");
 	chanceCard.emplace_back(L"Teścik3 kochani moi");
-	chanceCard.emplace_back(L"Teścik4 kochani moi");
-	chanceCard.emplace_back(L"Teścik5 kochani moi");
+	//chanceCard.emplace_back(L"Teścik4 kochani moi");
+	//chanceCard.emplace_back(L"Teścik5 kochani moi");
 
 }

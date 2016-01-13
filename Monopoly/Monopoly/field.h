@@ -7,17 +7,23 @@
 
 sf::Vector2i ChooseCard(unsigned int area);
 
-class Field
+class Field : public sf::Drawable, public sf::Transformable
 {
 	unsigned int area;
+	bool showButtons;
+
+	virtual void draw(sf::RenderTarget& target, sf::RenderStates states){}
 
 public:
-	Field(unsigned int area) : area(area){}
+	Field(unsigned int area, bool showButtons = true) : area(area), showButtons(showButtons){}
 	virtual ~Field(){}
 	unsigned int GetArea(){ return area; }
+	bool ShowButtonsOnCard(){ return showButtons; }
+
 	virtual void Action(Player& player) = 0;
 	virtual std::vector<ButtonSprite>& ShowGraphics() = 0;
 	virtual std::vector<ButtonText>& ShowTexts() = 0;
+
 };
 
 class ChanceField : public Field
@@ -30,13 +36,21 @@ class ChanceField : public Field
 	sf::Texture SpecialTexture;
 	bool visibility;
 
+	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+	{
+		for (auto elem : graphics)
+			target.draw(elem.GetSprite());
+		for (auto text : texts)
+			target.draw(text.GetText());
+	}
+
 public:
 	ChanceField(std::list<Chance>& cards, Graphics& gameGraphics, const unsigned int& area)
 		: 
 		cards(cards), 
 		RedCardTexture(gameGraphics.GetRedCardTexture()),
 		CardFont(gameGraphics.GetCardFont()),
-		Field(area),
+		Field(area, false),
 		visibility(false),
 		SpecialTexture(gameGraphics.GetChanceLogoTexture())
 	{
@@ -58,6 +72,9 @@ public:
 			texts.emplace_back(ButtonText(sf::Text(cards.front().GetDescrition(), CardFont, 14), sf::Color::White, 378, true));
 		//else
 			//ReloadChanceList(cards);
+	}
+	void ReloadChanceList()
+	{
 	}
 	void AfterShowDescription()
 	{
@@ -83,13 +100,21 @@ class SpecialField : public Field
 	sf::Font CardFont;
 	sf::Texture SpecialTexture;
 
+	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+	{
+		for (auto elem : graphics)
+			target.draw(elem.GetSprite());
+		for (auto text : texts)
+			target.draw(text.GetText());
+	}
+
 public:
-	SpecialField(const SpecialCard& card, const sf::Texture& CardTexture, const sf::Texture& SpecialTexture, const unsigned int& area)
+	SpecialField(const SpecialCard& card, Graphics& gameGraphics, const sf::Texture& SpecialTexture, const unsigned int& area)
 		:
 		card(card),
-		CardTexture(CardTexture),
+		CardTexture(gameGraphics.GetCardTexture()),
 		Field(area),
-		CardFont(*(this->card.Get_title().getFont())),
+		CardFont(gameGraphics.GetCardFont()),
 		SpecialTexture(SpecialTexture)
 	{
 		this->CardTexture.setSmooth(true);
@@ -136,14 +161,22 @@ class TrainField : public Field
 	sf::Font CardFont;
 	sf::Texture Train;
 
+	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+	{
+		for (auto elem : graphics)
+			target.draw(elem.GetSprite());
+		for (auto text : texts)
+			target.draw(text.GetText());
+	}
+
 public:
-	TrainField(const TrainCard& card, const sf::Texture& CardTexture, const sf::Texture& Train, const unsigned int& area)
+	TrainField(const TrainCard& card, Graphics& gameGraphics, const unsigned int& area)
 		:
 		card(card),
-		CardTexture(CardTexture),
+		CardTexture(gameGraphics.GetCardTexture()),
 		Field(area),
-		CardFont(*(this->card.Get_title().getFont())),
-		Train(Train)
+		CardFont(gameGraphics.GetCardFont()),
+		Train(gameGraphics.GetTrainLogoTexture())
 	{
 		this->CardTexture.setSmooth(true);
 		this->Train.setSmooth(true);
@@ -182,13 +215,22 @@ class DeedField : public Field
 	sf::Font CardFont;
 	sf::VertexArray Color;
 
+	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+	{
+		for (auto elem : graphics)
+			target.draw(elem.GetSprite());
+		target.draw(Color);
+		for (auto text : texts)
+			target.draw(text.GetText());
+	}
+
 public:
-	DeedField(const DeedCard& card, const sf::Texture& CardTexture, sf::Color color, const unsigned int& area)
+	DeedField(const DeedCard& card, Graphics& gameGraphics, sf::Color color, const unsigned int& area)
 		: 
 		card(card), 
-		CardTexture(CardTexture), 
+		CardTexture(gameGraphics.GetCardTexture()), 
 		Field(area), 
-		CardFont(*(this->card.Get_title().getFont())), // Problem długiego startu gry!!!
+		CardFont(gameGraphics.GetCardFont()),
 		Color(sf::Quads, 4)
 	{
 		Color[0].position = sf::Vector2f(220, 140); //left-top

@@ -40,9 +40,9 @@ public:
 		pair_texture.second.setSmooth(true);
 		button_sprite.setPosition(x, y);
 		if (Active)
-			button_sprite.setTexture(pair_texture.first);
+			button_sprite.setTexture(enable);
 		else
-			button_sprite.setTexture(pair_texture.second);
+			button_sprite.setTexture(disable);
 	}
 	std::pair<sf::Texture, sf::Texture>& GetTexture() { return pair_texture; }
 	sf::Sprite& GetSprite() { return button_sprite; }

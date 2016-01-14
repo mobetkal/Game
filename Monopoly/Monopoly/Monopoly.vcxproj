@@ -75,7 +75,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="functions.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
@@ -88,9 +87,9 @@
     <ClInclude Include="dice.h" />
     <ClInclude Include="field.h" />
     <ClInclude Include="frame.h" />
-    <ClInclude Include="functions.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="graphics.h" />
+    <ClInclude Include="minicard.h" />
     <ClInclude Include="pawn.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="rent.h" />

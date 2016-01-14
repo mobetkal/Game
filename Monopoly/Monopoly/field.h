@@ -1,14 +1,9 @@
 ﻿#pragma once
-#include "card.h"
-#include "game.h"
-#include "buttontext.h"
 #include <string>
-#include <iomanip>
 #include <algorithm>
 #include <list>
-
-sf::Vector2i ChooseCard(unsigned int area);
-void ReloadCardsList(std::vector<DrawCard>& cards);
+#include "card.h"
+#include "buttontext.h"
 
 class Field : public sf::Drawable, public sf::Transformable
 {
@@ -27,11 +22,47 @@ public:
 	virtual std::vector<ButtonSprite>& ShowGraphics() = 0;
 	virtual std::vector<ButtonText>& ShowTexts() = 0;
 
+	sf::Vector2i ChooseCard(unsigned int area)
+	{
+		switch (area)
+		{
+		case 1:	  return sf::Vector2i(2, 0);
+		case 3:	  return sf::Vector2i(2, 1);
+		case 5:	  return sf::Vector2i(0, 0); // Dworzec 1
+		case 6:	  return sf::Vector2i(3, 0);
+		case 8:	  return sf::Vector2i(3, 1);
+		case 9:	  return sf::Vector2i(3, 2);
+		case 11:  return sf::Vector2i(4, 0);
+		case 12:  return sf::Vector2i(1, 0); // ELEKTROWNIA
+		case 13:  return sf::Vector2i(4, 1);
+		case 14:  return sf::Vector2i(4, 2);
+		case 15:  return sf::Vector2i(0, 1); // Dworzec 2
+		case 16:  return sf::Vector2i(5, 0);
+		case 18:  return sf::Vector2i(5, 1);
+		case 19:  return sf::Vector2i(5, 2);
+		case 21:  return sf::Vector2i(6, 0);
+		case 23:  return sf::Vector2i(6, 1);
+		case 24:  return sf::Vector2i(6, 2);
+		case 25:  return sf::Vector2i(0, 2); // Dworzec 3
+		case 26:  return sf::Vector2i(7, 0);
+		case 27:  return sf::Vector2i(7, 1);
+		case 28:  return sf::Vector2i(1, 1); // WODOCIĄG
+		case 29:  return sf::Vector2i(7, 2);
+		case 31:  return sf::Vector2i(8, 0);
+		case 32:  return sf::Vector2i(8, 1);
+		case 34:  return sf::Vector2i(8, 2);
+		case 35:  return sf::Vector2i(0, 3); // Dworzec 4
+		case 37:  return sf::Vector2i(9, 0);
+		case 39:  return sf::Vector2i(9, 1);
+		default:
+			return sf::Vector2i(-1, -1);
+		}
+	}
 };
 
 class DrawCardField : public Field
 {
-	std::vector<DrawCard> cards;				// BRAK MOŻLIWOŚCI LOSOWANIA KART Z JEDNEJ TALII
+	std::vector<DrawCard>& cards;				// BRAK MOŻLIWOŚCI LOSOWANIA KART Z JEDNEJ TALII
 	std::vector<ButtonSprite> graphics;
 	std::vector<ButtonText> texts;
 	sf::Texture RedCardTexture;
@@ -46,7 +77,7 @@ class DrawCardField : public Field
 		for (auto text : texts)
 			target.draw(text.GetText());
 	}
-
+	
 public:
 	DrawCardField(std::vector<DrawCard>& cards, Graphics& gameGraphics, sf::Texture& SpecialTexture, const unsigned int& area)
 		: 
@@ -75,10 +106,9 @@ public:
 			texts.emplace_back(ButtonText(sf::Text(cards.front().GetDescrition(), CardFont, 14), sf::Color::White, 378, true));
 		else
 		{
-			ReloadCardsList(cards);
+			ReloadCardsList();
 			texts.emplace_back(ButtonText(sf::Text(cards.front().GetDescrition(), CardFont, 14), sf::Color::White, 378, true));
 		}
-			
 	}
 	void AfterShowDescription()
 	{
@@ -86,6 +116,12 @@ public:
 		cards.emplace_back(texts.back().GetText().getString(), true);
 		texts.pop_back();
 		cards.erase(cards.begin());
+	}
+	void ReloadCardsList()
+	{
+		std::random_shuffle(cards.begin(), cards.end());
+		for (auto& card : cards)
+			card.SetUsed(false);
 	}
 	void Action(Player& player) override
 	{
@@ -150,7 +186,7 @@ public:
 			sf::Vector2i Cords(ChooseCard(this->GetArea()));
 			if (Cords.x != -1 && Cords.y != -1)
 			{
-				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetCardStatusOwner(true);
+				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetCardStatusOwner(&player);
 				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetMiniCardArea(this->GetArea());
 			}
 		}
@@ -207,7 +243,7 @@ public:
 			sf::Vector2i Cords(ChooseCard(this->GetArea()));
 			if (Cords.x != -1 && Cords.y != -1)
 			{
-				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetCardStatusOwner(true);
+				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetCardStatusOwner(&player);
 				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetMiniCardArea(this->GetArea());
 			}
 		}
@@ -277,7 +313,7 @@ public:
 			sf::Vector2i Cords(ChooseCard(this->GetArea()));
 			if (Cords.x != -1 && Cords.y != -1)
 			{
-				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetCardStatusOwner(true);
+				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetCardStatusOwner(&player);
 				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetMiniCardArea(this->GetArea());
 			}
 		}
@@ -285,47 +321,3 @@ public:
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override {	return texts; }
 };
-
-void ReloadCardsList(std::vector<DrawCard>& cards)
-{
-	std::random_shuffle(cards.begin(), cards.end());
-	for (auto& card : cards)
-		card.SetUsed(false);
-}
-
-sf::Vector2i ChooseCard(unsigned int area)
-{
-	switch (area)
-	{
-	case 1:	  return sf::Vector2i(2,0);
-	case 3:	  return sf::Vector2i(2, 1);
-	case 5:	  return sf::Vector2i(0, 0); // Dworzec 1
-	case 6:	  return sf::Vector2i(3, 0);
-	case 8:	  return sf::Vector2i(3, 1);
-	case 9:	  return sf::Vector2i(3, 2);
-	case 11:  return sf::Vector2i(4, 0);
-	case 12:  return sf::Vector2i(1, 0); // ELEKTROWNIA
-	case 13:  return sf::Vector2i(4, 1);
-	case 14:  return sf::Vector2i(4, 2);
-	case 15:  return sf::Vector2i(0, 1); // Dworzec 2
-	case 16:  return sf::Vector2i(5, 0);
-	case 18:  return sf::Vector2i(5, 1);
-	case 19:  return sf::Vector2i(5, 2);
-	case 21:  return sf::Vector2i(6, 0);
-	case 23:  return sf::Vector2i(6, 1);
-	case 24:  return sf::Vector2i(6, 2);
-	case 25:  return sf::Vector2i(0, 2); // Dworzec 3
-	case 26:  return sf::Vector2i(7, 0);
-	case 27:  return sf::Vector2i(7, 1);
-	case 28:  return sf::Vector2i(1, 1); // WODOCIĄG
-	case 29:  return sf::Vector2i(7, 2);
-	case 31:  return sf::Vector2i(8, 0);
-	case 32:  return sf::Vector2i(8, 1);
-	case 34:  return sf::Vector2i(8, 2);
-	case 35:  return sf::Vector2i(0, 3); // Dworzec 4
-	case 37:  return sf::Vector2i(9, 0);
-	case 39:  return sf::Vector2i(9, 1);
-	default:
-		return sf::Vector2i(-1, -1);
-	}
-}

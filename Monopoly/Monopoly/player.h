@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include <iostream>
 #include "pawn.h"
 #include "cardstatus.h"
 #include "graphics.h"

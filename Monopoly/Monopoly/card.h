@@ -4,27 +4,24 @@
 #include <cctype>
 #include "rent.h"
 #include "player.h"
-#include "game.h"
+
 
 class DrawCard
 {
 	sf::String description;
 	bool wasUsed;
-	//bool visibility;
+
 public:
 	DrawCard(const sf::String& description, bool wasUsed = false) 
 		:
 		description(description),
-		wasUsed(wasUsed)//,
-		//visibility(false)
+		wasUsed(wasUsed)
 	{
 		
 	}
 	sf::String& GetDescrition(){ return description; }
 	bool cardWasUsed(){ return wasUsed; }
 	void SetUsed(bool status){ wasUsed = status; }
-	//bool isVisible(){ return visibility; }
-	//void SetVisibility(bool status){ visibility = status; }
 };
 
 class DeedCard

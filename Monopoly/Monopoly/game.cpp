@@ -15,7 +15,6 @@
 #include "player.h"
 #include "field.h"
 #include "graphics.h"
-//#include "functions.h"
 
 using namespace std;
 using namespace sf;
@@ -25,7 +24,7 @@ Field* FindField(std::list<Field*> list, const unsigned int ID);
 void CreateChanceList(vector<DrawCard>& chanceCard);
 void CreateCommunityList(vector<DrawCard>& communityCard);
 
-Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None), graphics(Graphics())
+Game::Game() : window(VideoMode(1100, 700, 32), "", Style::None), graphics(Graphics())
 {
 	window.setPosition(Vector2i(100, 10));
 	window.setKeyRepeatEnabled(true);
@@ -457,6 +456,9 @@ void Game::StartGame()
 	imgButtons.emplace_back(graphics.GetButtonEnable(), graphics.GetButtonDisable(), 936.0f, 540.0f);
 	pair<ButtonSprite, ButtonText> buy = make_pair(ButtonSprite(graphics.GetButtonEnableShort(), graphics.GetButtonDisableShort(), 225.0f, 515.0f), ButtonText(L"KUP", graphics.GetMenuFont(), 20, 268.0f, 522.0f, false));
 	pair<ButtonSprite, ButtonText> bid = make_pair(ButtonSprite(graphics.GetButtonEnableShort(), graphics.GetButtonDisableShort(), 355.0f, 515.0f, false), ButtonText(L"LICYTUJ", graphics.GetMenuFont(), 20, 381.0f, 522.0f, false)); // Brak opcji
+	pair<ButtonSprite, ButtonText> build = make_pair(ButtonSprite(graphics.GetButtonEnableShort(), graphics.GetButtonDisableShort(), 225.0f, 515.0f, false), ButtonText(L"ZBUDUJ", graphics.GetCardFont(), 19, 252.0f, 522.0f, false));
+	pair<ButtonSprite, ButtonText> deposit = make_pair(ButtonSprite(graphics.GetButtonEnableShort(), graphics.GetButtonDisableShort(), 355.0f, 515.0f, false), ButtonText(L"HIPOTEKA", graphics.GetCardFont(), 19, 375.0f, 522.0f, false));
+
 
 	vector<ButtonText> textButtons;
 	textButtons.emplace_back(L"Aktywny Gracz", graphics.GetMenuFont(), 28, 840.0f, 5.0f, false);
@@ -475,7 +477,7 @@ void Game::StartGame()
 	ButtonSprite* hoverImgButton = nullptr;
 	ButtonText* hoverTextButton = nullptr;
 	MiniCard* hoverStatusCard = nullptr;
-	MiniCard* ShowBigCard = nullptr;
+	Field* ShowBigCard = nullptr;
 
 	Player* activePlayer = nullptr;
 	Field* FindedCard = nullptr;
@@ -549,10 +551,17 @@ void Game::StartGame()
 			else if (bid.first.GetSprite().getGlobalBounds().contains(mouse))
 				hoverImgButton = &bid.first;
 		}
-		
+		if (!activePlayer->IsActiveField() && ShowBigCard)
+		{
+			if (build.first.GetSprite().getGlobalBounds().contains(mouse))
+				hoverImgButton = &build.first;
+			else if (deposit.first.GetSprite().getGlobalBounds().contains(mouse))
+				hoverImgButton = &deposit.first;
+		}
+
 		if (activePlayer->IsActiveMovement())
 		{
-			if (!activePlayer->IsActiveField())// || !ShownCard)
+			if (!activePlayer->IsActiveField())
 				imgButtons[0].activeButton(true);
 			else 
 				imgButtons[0].activeButton(false);
@@ -561,7 +570,7 @@ void Game::StartGame()
 		else
 		{
 			imgButtons[0].activeButton(false);
-			if (!activePlayer->IsActiveField())// || !ShownCard)
+			if (!activePlayer->IsActiveField())
 				imgButtons[1].activeButton(true);
 			else
 				imgButtons[0].activeButton(false);
@@ -581,9 +590,17 @@ void Game::StartGame()
 			{
 				if (hoverStatusCard && !activePlayer->IsActiveField())
 				{
-					ShowBigCard = hoverStatusCard;
+					ShowBigCard = FindField(fields, hoverStatusCard->GetMiniCardArea());
+					if (hoverStatusCard->GetMiniCardOwner() == activePlayer)
+					{
+						deposit.first.activeButton(true);
+					}
+					else
+					{
+						deposit.first.activeButton(false);
+					}
 				}
-				else
+				else if (ShowBigCard && !(ShowBigCard->ShowGraphics().begin()->GetSprite().getGlobalBounds().contains(mouse)))
 				{
 					ShowBigCard = nullptr;
 				}
@@ -604,7 +621,6 @@ void Game::StartGame()
 
 				if (ShownCard && !bid.first.IsActive() && !buy.first.IsActive()) // Kiedy karty nie da się kupić, bo jest kogoś :P
 				{
-
 					if (!dynamic_cast<DrawCardField*>(FindedCard))
 					{
 						Player* owner = nullptr;
@@ -827,15 +843,19 @@ void Game::StartGame()
 			window.draw(activePlayer->GetJailCardTitle());
 		}
 
-		if (ShowBigCard && ShowBigCard->GetMiniCardArea() != -1)
+		if (ShowBigCard)
 		{
-			window.draw(*FindField(fields, ShowBigCard->GetMiniCardArea()));
+			window.draw(*ShowBigCard);
+			window.draw(build.first.GetSprite());
+			window.draw(build.second.GetText());
+			window.draw(deposit.first.GetSprite());
+			window.draw(deposit.second.GetText());
 		}
 		window.display();
 	}
 }
 
-Field* FindField(std::list<Field*> list, const unsigned int ID)
+Field* Game::FindField(list<Field*> list, const int ID)
 {
 	auto elem = list.begin();
 	auto end = list.end();
@@ -848,11 +868,11 @@ Field* FindField(std::list<Field*> list, const unsigned int ID)
 	return nullptr;
 }
 
-std::list<Field*> CreateList_ptrField(Graphics& graphics)
+std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 {
 	Font& CardFont = graphics.GetCardFont();
 	Texture CardTexture = graphics.GetCardTexture();
-	vector<DrawCard> chanceList, communityList; 
+	 
 	CreateChanceList(chanceList);
 	CreateCommunityList(communityList);
 
@@ -955,7 +975,7 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 		));
 
 	fields.emplace_back(new DrawCardField(								// KARTA KASY SPOŁECZNEJ POLE 33 (NR 3)
-		communityList, graphics, graphics.GetChestLogoTexture(), 36
+		communityList, graphics, graphics.GetChestLogoTexture(), 33
 		));
 
 	fields.emplace_back(new DeedField(
@@ -979,7 +999,7 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 	return fields;
 }
 
-void CreateChanceList(vector<DrawCard>& chanceCard)
+void Game::CreateChanceList(vector<DrawCard>& chanceCard)
 {
 	chanceCard.emplace_back(L"Teścik1 kochani moi");
 	chanceCard.emplace_back(L"Teścik2 kochani moi");
@@ -989,7 +1009,7 @@ void CreateChanceList(vector<DrawCard>& chanceCard)
 
 }
 
-void CreateCommunityList(vector<DrawCard>& communityCard)
+void Game::CreateCommunityList(vector<DrawCard>& communityCard)
 {
 	communityCard.emplace_back(L"Teścik1 skrzynki kochani moi");
 	communityCard.emplace_back(L"Teścik2 skrzunki kochani moi");

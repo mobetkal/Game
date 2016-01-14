@@ -22,8 +22,8 @@ using namespace sf;
 
 std::list<Field*> CreateList_ptrField(Graphics& graphics);
 Field* FindField(std::list<Field*> list, const unsigned int ID);
-//list<Chance> CreateChanceList();
-void CreateChanceList(vector<Chance>& chanceCard);
+void CreateChanceList(vector<DrawCard>& chanceCard);
+void CreateCommunityList(vector<DrawCard>& communityCard);
 
 Game::Game(void) : window(VideoMode(1100, 700, 32), "", Style::None), graphics(Graphics())
 {
@@ -450,6 +450,7 @@ void Game::StartGame()
 	list<Field*> fields = CreateList_ptrField(graphics);
 	bool ShownCard = false;
 	bool CloseCard = false;
+	bool LetDrawStatusCard = false;
 
 	vector<ButtonSprite> imgButtons;
 	imgButtons.emplace_back(graphics.GetButtonEnable(), graphics.GetButtonDisable(), 936.0f, 55.0f);
@@ -473,6 +474,8 @@ void Game::StartGame()
 
 	ButtonSprite* hoverImgButton = nullptr;
 	ButtonText* hoverTextButton = nullptr;
+	MiniCard* hoverStatusCard = nullptr;
+	MiniCard* ShowBigCard = nullptr;
 
 	Player* activePlayer = nullptr;
 	Field* FindedCard = nullptr;
@@ -483,9 +486,20 @@ void Game::StartGame()
 		hoverImgButton = nullptr;
 		hoverTextButton = nullptr;
 		activePlayer = nullptr;
+		hoverStatusCard = nullptr;
 
 		for (auto& active : player)
 		{
+			for (auto& sector : active.GetCardsStatus())
+			{
+				for (auto& card : sector->GetVectorCards())
+				{
+					if (card.GetVertCard().getBounds().contains(mouse))
+					{
+						hoverStatusCard = &card;
+					}
+				}
+			}
 			if (active.IsActive())
 			{
 				activePlayer = &active;
@@ -524,7 +538,7 @@ void Game::StartGame()
 		{
 			hoverImgButton = &button;
 		}
-		if (dynamic_cast<ChanceField*>(FindedCard) && FindedCard->ShowGraphics().begin()->GetSprite().getGlobalBounds().contains(mouse))
+		if (dynamic_cast<DrawCardField*>(FindedCard) && FindedCard->ShowGraphics().begin()->GetSprite().getGlobalBounds().contains(mouse))
 		{
 			hoverImgButton = &(FindedCard->ShowGraphics()[0]);
 		}
@@ -565,6 +579,15 @@ void Game::StartGame()
 
 			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 			{
+				if (hoverStatusCard && !activePlayer->IsActiveField())
+				{
+					ShowBigCard = hoverStatusCard;
+				}
+				else
+				{
+					ShowBigCard = nullptr;
+				}
+
 				if (hoverImgButton == &buy.first && ShownCard && buy.first.IsActive())
 				{
 					FindedCard->Action(*activePlayer);
@@ -582,7 +605,7 @@ void Game::StartGame()
 				if (ShownCard && !bid.first.IsActive() && !buy.first.IsActive()) // Kiedy karty nie da się kupić, bo jest kogoś :P
 				{
 
-					if (!dynamic_cast<ChanceField*>(FindedCard)) // && !dynamic_cast<CommunityField*>(FindedCard)
+					if (!dynamic_cast<DrawCardField*>(FindedCard))
 					{
 						Player* owner = nullptr;
 						unsigned int price = 0;
@@ -613,7 +636,7 @@ void Game::StartGame()
 					}
 					else
 					{
-						if (ChanceField* card = dynamic_cast<ChanceField*>(FindedCard))
+						if (DrawCardField* card = dynamic_cast<DrawCardField*>(FindedCard))
 						{
 							if (hoverImgButton == &(FindedCard->ShowGraphics()[0]) && !card->isVisible())
 							{
@@ -628,10 +651,8 @@ void Game::StartGame()
 								imgButtons[1].activeButton(true);
 								card->SetVisibility(false);
 								card->AfterShowDescription();
-								//Dodać zmianę karty :)
 							}
 						}
-						//else if (CommunityField* card = dynamic_cast<CommunityField*>(FindedCard))
 					}
 				}
 
@@ -805,6 +826,11 @@ void Game::StartGame()
 			window.draw(activePlayer->GetJailCard());
 			window.draw(activePlayer->GetJailCardTitle());
 		}
+
+		if (ShowBigCard && ShowBigCard->GetMiniCardArea() != -1)
+		{
+			window.draw(*FindField(fields, ShowBigCard->GetMiniCardArea()));
+		}
 		window.display();
 	}
 }
@@ -826,14 +852,18 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 {
 	Font& CardFont = graphics.GetCardFont();
 	Texture CardTexture = graphics.GetCardTexture();
-	vector<Chance> chanceList; 
+	vector<DrawCard> chanceList, communityList; 
 	CreateChanceList(chanceList);
+	CreateCommunityList(communityList);
 
 	std::list<Field*> fields;
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ULICA KONOPACKA", CardFont, Rent(2, 10, 30, 90, 160), 60, 50, 50, 30), graphics, Color(78, 61, 113), 1
 		));
-	//// kasa społeczna 2
+
+	fields.emplace_back(new DrawCardField(								// KARTA KASY SPOŁECZNEJ POLE 2 (NR 1)
+		communityList, graphics, graphics.GetChestLogoTexture(), 2
+		));
 
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ULICA STALOWA", CardFont, Rent(4, 20, 60, 180, 320), 60, 50, 50, 30), graphics, Color(78, 61, 113), 3
@@ -846,11 +876,9 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 		DeedCard(L"ULICA RADZYMIŃSKA", CardFont, Rent(6, 30, 90, 270, 400), 100, 50, 50, 50), graphics, Color(178, 194, 228), 6
 		));
 
-	//// karta szansy 7
-	fields.emplace_back(new ChanceField(
-		chanceList, graphics, 7
+	fields.emplace_back(new DrawCardField(								// KARTA SZANSY POLE 7 (NR 1)
+		chanceList, graphics, graphics.GetChanceLogoTexture(), 7
 		));
-
 
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ULICA JAGIELLOŃSKA", CardFont, Rent(6, 30, 90, 270, 400), 100, 50, 50, 50), graphics, Color(178, 194, 228), 8
@@ -877,7 +905,11 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ULICA OBOZOWA", CardFont, Rent(14, 70, 200, 550, 750), 180, 100, 100, 90), graphics, Color(243, 141, 77), 16
 		));
-	//KASA SPOŁECZNA 17
+
+	fields.emplace_back(new DrawCardField(								// KARTA KASY SPOŁECZNEJ POLE 17 (NR 2)
+		communityList, graphics, graphics.GetChestLogoTexture(), 17
+		));
+
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ULICA GÓRCZEWSKA", CardFont, Rent(14, 70, 200, 550, 750), 180, 100, 100, 90), graphics, Color(243, 141, 77), 18
 		));
@@ -888,7 +920,11 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ULICA MICKIEWICZA", CardFont, Rent(18, 90, 250, 700, 875), 220, 150, 150, 110), graphics, Color(239, 59, 58), 21
 		));
-	//KARTA SZANSY 22
+
+	fields.emplace_back(new DrawCardField(								// KARTA SZANSY POLE 22 (NR 2)
+		chanceList, graphics, graphics.GetChanceLogoTexture(), 22
+		));
+
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ULICA SŁOWACKIEGO", CardFont, Rent(18, 90, 250, 700, 875), 220, 150, 150, 110), graphics, Color(239, 59, 58), 23
 		));
@@ -917,17 +953,20 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ULICA MARSZAŁKOWSKA", CardFont, Rent(26, 130, 390, 900, 1100), 300, 200, 200, 150), graphics, Color(83, 148, 114), 32
 		));
-	//KASA SPOŁECZNA 33
+
+	fields.emplace_back(new DrawCardField(								// KARTA KASY SPOŁECZNEJ POLE 33 (NR 3)
+		communityList, graphics, graphics.GetChestLogoTexture(), 36
+		));
+
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ALEJE JEROZOLIMSKIE", CardFont, Rent(28, 150, 450, 1000, 1200), 320, 200, 200, 160), graphics, Color(83, 148, 114), 34
 		));
 	fields.emplace_back(new TrainField(
 		TrainCard("DWORZEC CENTRALNY", CardFont, 200, 25, 100), graphics, 35
 		));
-	//SZANSA 36
 
-	fields.emplace_back(new ChanceField(
-		chanceList, graphics, 36
+	fields.emplace_back(new DrawCardField(								// KARTA SZANSY POLE 36 (NR 3)
+		chanceList, graphics, graphics.GetChanceLogoTexture(), 36
 		));
 
 	fields.emplace_back(new DeedField(
@@ -940,12 +979,20 @@ std::list<Field*> CreateList_ptrField(Graphics& graphics)
 	return fields;
 }
 
-void CreateChanceList(vector<Chance>& chanceCard)
+void CreateChanceList(vector<DrawCard>& chanceCard)
 {
 	chanceCard.emplace_back(L"Teścik1 kochani moi");
 	chanceCard.emplace_back(L"Teścik2 kochani moi");
 	chanceCard.emplace_back(L"Teścik3 kochani moi");
 	//chanceCard.emplace_back(L"Teścik4 kochani moi");
 	//chanceCard.emplace_back(L"Teścik5 kochani moi");
+
+}
+
+void CreateCommunityList(vector<DrawCard>& communityCard)
+{
+	communityCard.emplace_back(L"Teścik1 skrzynki kochani moi");
+	communityCard.emplace_back(L"Teścik2 skrzunki kochani moi");
+	communityCard.emplace_back(L"Teścik3 skrzynki kochani moi");
 
 }

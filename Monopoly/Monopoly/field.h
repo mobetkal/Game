@@ -5,12 +5,10 @@
 #include <string>
 #include <iomanip>
 #include <algorithm>
-//#include <cstdlib> 
 #include <list>
 
 sf::Vector2i ChooseCard(unsigned int area);
-void ReloadCardsList(std::vector<Chance>& cards);
-//int myrandom(int i) { return std::rand() % i; }
+void ReloadCardsList(std::vector<DrawCard>& cards);
 
 class Field : public sf::Drawable, public sf::Transformable
 {
@@ -31,9 +29,9 @@ public:
 
 };
 
-class ChanceField : public Field
+class DrawCardField : public Field
 {
-	std::vector<Chance> cards;				// BRAK MOŻLIWOŚCI LOSOWANIA KART Z JEDNEJ TALII
+	std::vector<DrawCard> cards;				// BRAK MOŻLIWOŚCI LOSOWANIA KART Z JEDNEJ TALII
 	std::vector<ButtonSprite> graphics;
 	std::vector<ButtonText> texts;
 	sf::Texture RedCardTexture;
@@ -50,14 +48,14 @@ class ChanceField : public Field
 	}
 
 public:
-	ChanceField(std::vector<Chance>& cards, Graphics& gameGraphics, const unsigned int& area)
+	DrawCardField(std::vector<DrawCard>& cards, Graphics& gameGraphics, sf::Texture& SpecialTexture, const unsigned int& area)
 		: 
 		cards(cards), 
 		RedCardTexture(gameGraphics.GetRedCardTexture()),
 		CardFont(gameGraphics.GetCardFont()),
 		Field(area, false),
 		visibility(false),
-		SpecialTexture(gameGraphics.GetChanceLogoTexture())
+		SpecialTexture(SpecialTexture)
 	{
 		this->RedCardTexture.setSmooth(true);
 		this->SpecialTexture.setSmooth(true);
@@ -69,7 +67,7 @@ public:
 	}
 	bool isVisible(){ return visibility; }
 	void SetVisibility(bool status){ visibility = status; }
-	Chance& GetCard() { return cards.front(); }
+	DrawCard& GetCard() { return cards.front(); }
 	void ShowDescription()
 	{
 		graphics.pop_back();
@@ -88,7 +86,6 @@ public:
 		cards.emplace_back(texts.back().GetText().getString(), true);
 		texts.pop_back();
 		cards.erase(cards.begin());
-		//cards.pop_front();
 	}
 	void Action(Player& player) override
 	{
@@ -152,7 +149,10 @@ public:
 			player.SpendMoney(card.Get_CardPrice());	
 			sf::Vector2i Cords(ChooseCard(this->GetArea()));
 			if (Cords.x != -1 && Cords.y != -1)
+			{
 				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetCardStatusOwner(true);
+				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetMiniCardArea(this->GetArea());
+			}
 		}
 	}
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
@@ -206,7 +206,10 @@ public:
 			player.SpendMoney(card.Get_CardPrice());
 			sf::Vector2i Cords(ChooseCard(this->GetArea()));
 			if (Cords.x != -1 && Cords.y != -1)
+			{
 				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetCardStatusOwner(true);
+				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetMiniCardArea(this->GetArea());
+			}
 		}
 	}
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
@@ -272,15 +275,18 @@ public:
 			card.SetOwner(player);
 			player.SpendMoney(card.Get_landPrice());
 			sf::Vector2i Cords(ChooseCard(this->GetArea()));
-			if (Cords.x != -1 && Cords.y != -1 )
+			if (Cords.x != -1 && Cords.y != -1)
+			{
 				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetCardStatusOwner(true);
+				player.GetCardsStatus()[Cords.x]->GetVectorCards()[Cords.y].SetMiniCardArea(this->GetArea());
+			}
 		}
 	}
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override {	return texts; }
 };
 
-void ReloadCardsList(std::vector<Chance>& cards)
+void ReloadCardsList(std::vector<DrawCard>& cards)
 {
 	std::random_shuffle(cards.begin(), cards.end());
 	for (auto& card : cards)

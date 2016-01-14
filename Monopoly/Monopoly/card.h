@@ -6,13 +6,13 @@
 #include "player.h"
 #include "game.h"
 
-class Chance
+class DrawCard
 {
 	sf::String description;
 	bool wasUsed;
 	//bool visibility;
 public:
-	Chance(const sf::String& description, bool wasUsed = false) 
+	DrawCard(const sf::String& description, bool wasUsed = false) 
 		:
 		description(description),
 		wasUsed(wasUsed)//,

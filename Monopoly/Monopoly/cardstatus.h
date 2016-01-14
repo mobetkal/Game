@@ -11,11 +11,14 @@ class MiniCard
 	float x;
 	float y;
 	bool busy;
+	int area;
 
 public:
 	sf::VertexArray& GetVertCard(){ return VertCard; }
 	sf::Texture& GetMiniCardTexture() { return Texture; }
 	bool GetBusy(){ return busy; }
+	int GetMiniCardArea(){ return area; }
+	void SetMiniCardArea(unsigned int newArea){ area = newArea; }
 	MiniCard(const sf::Texture& Texture, const sf::Color& Color, const float& x, const float& y, bool busy = false)
 		:
 		VertCard(sf::Quads, 4),
@@ -23,6 +26,7 @@ public:
 		Texture(Texture),
 		x(x),
 		y(y),
+		area(-1),
 		busy(busy)
 	{
 		VertCard[0].position = sf::Vector2f(x, y);				//left-top

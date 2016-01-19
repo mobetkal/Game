@@ -1,6 +1,5 @@
 #pragma once
 #include <utility>
-#include <iostream>
 #include <SFML/Graphics.hpp>
 
 class ButtonSprite
@@ -44,6 +43,7 @@ public:
 		else
 			button_sprite.setTexture(disable);
 	}
+
 	std::pair<sf::Texture, sf::Texture>& GetTexture() { return pair_texture; }
 	sf::Sprite& GetSprite() { return button_sprite; }
 	GameState GetState() const { return state; }

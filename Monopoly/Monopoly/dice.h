@@ -8,6 +8,7 @@ class Dice
 	int beginValue, endValue;
 	bool visible;
 	sf::Sprite dice;
+
 public:
 	Dice(std::vector<sf::Texture>& meshNumbers, float x, float y, int beginValue = 1, int endValue = 6)
 		:
@@ -19,12 +20,14 @@ public:
 		dice.setTexture(SetTexture(RollDice()));
 		dice.setPosition(x, y);
 	};
+
 	Dice(int beginValue, int endValue)
 		:
 		beginValue(beginValue),
 		endValue(endValue),
 		visible(false)
 	{};
+
 	int RollDice()
 	{
 		std::default_random_engine engine(random());
@@ -34,10 +37,12 @@ public:
 			dice.setTexture(SetTexture(meshNumber));
 		return meshNumber;
 	}
+
 	sf::Texture& SetTexture(int number)
 	{
 		meshNumbers[number - 1].setSmooth(true);
 		return meshNumbers[number - 1];
 	}
+
 	sf::Sprite& GetSprite(){ return dice; }
 };

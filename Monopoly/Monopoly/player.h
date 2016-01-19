@@ -85,6 +85,32 @@ public:
 		JailCard.setTexture(MiniCardsTexture[0]); 
 		JailCard.setPosition(755.0f, 55.0f);
 	};
+	Player(Player&& rhs)
+		:
+		name(rhs.name),
+		pawn(std::move(rhs.pawn)),
+		Cards(std::move(rhs.Cards)),
+		money(rhs.money),
+		existJailCard(rhs.existJailCard),
+		doublet(rhs.doublet),
+		activeMovement(rhs.activeMovement),
+		active(rhs.active),
+		activeField(rhs.activeField),
+		blockMovement(rhs.blockMovement),
+		PlayerID(rhs.PlayerID),
+		MiniCardsTexture(rhs.MiniCardsTexture),
+		moneyStatus(rhs.moneyStatus),
+		graphics(rhs.graphics),
+		JailCardTitle(rhs.JailCardTitle),
+		JailCard(rhs.JailCard)
+	{}
+	Player(const Player&) = delete;
+	Player& operator=(const Player&) = delete;
+	~Player()
+	{
+		for (auto& card : Cards)
+			delete card;
+	}
 	sf::Text& GetMoneyStatus(){ return moneyStatus; }
 	sf::Text& GetJailCardTitle(){ return JailCardTitle; }
 	sf::Sprite& GetJailCard(){ return JailCard; }

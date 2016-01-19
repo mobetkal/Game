@@ -21,6 +21,7 @@ public:
 	virtual void Action(Player& player) = 0;
 	virtual std::vector<ButtonSprite>& ShowGraphics() = 0;
 	virtual std::vector<ButtonText>& ShowTexts() = 0;
+	virtual void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) = 0;
 
 	sf::Vector2i ChooseCard(unsigned int area)
 	{
@@ -62,7 +63,7 @@ public:
 
 class DrawCardField : public Field
 {
-	std::vector<DrawCard>& cards;				// BRAK MOŻLIWOŚCI LOSOWANIA KART Z JEDNEJ TALII
+	std::vector<DrawCard>& cards;
 	std::vector<ButtonSprite> graphics;
 	std::vector<ButtonText> texts;
 	sf::Texture RedCardTexture;
@@ -126,6 +127,11 @@ public:
 	void Action(Player& player) override
 	{
 		//cout << "Karta szansy" << endl;
+	}
+	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
+	{
+		owner = nullptr;
+		price = 0;
 	}
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override { return texts; }
@@ -191,6 +197,21 @@ public:
 			}
 		}
 	}
+	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
+	{
+		owner = card.GetOwner();
+		int meshNumber = activePlayer->GetPawn().GetLastRollDice();
+		if (owner)
+		{
+			int multiplier = -1;
+			for (auto& status : owner->GetCardsStatus()[1]->GetVectorCards())
+			{
+				if (status.GetMiniCardOwner() == owner)
+					++multiplier;
+			}
+			price = meshNumber * 4 + meshNumber*multiplier * 6;
+		}
+	}
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override { return texts; }
 };
@@ -248,6 +269,22 @@ public:
 			}
 		}
 	}
+
+	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
+	{
+		owner = card.GetOwner();
+		price = card.Get_Rent();
+		if (owner)
+		{
+			for (auto& status : owner->GetCardsStatus()[0]->GetVectorCards())
+			{
+				if (status.GetMiniCardOwner() == owner)
+					price *= 2;
+			}
+			price = price / 2;
+		}
+	}
+	
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override { return texts; }
 };
@@ -318,6 +355,13 @@ public:
 			}
 		}
 	}
+
+	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
+	{
+		owner = card.GetOwner();
+		price = card.Get_rents().Get_withoutHouse();
+	}
+
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override {	return texts; }
 };

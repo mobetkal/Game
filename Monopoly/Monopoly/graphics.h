@@ -1,10 +1,9 @@
 #pragma once
 #include <SFML\Graphics.hpp>
-#include <vector>
-
+#include <vector>
 class Graphics
 {
-	sf::Texture bg_menu, game_board;
+	sf::Texture bg_menu, bg_trade, game_board;
 	sf::Texture twoPlayers, threePlayers, fourPlayers, twoPlayersHover, threePlayersHover, fourPlayersHover;
 	sf::Texture frame, frame_active, frame_wrong;
 	sf::Texture button_enable, button_disable, button_enable_short, button_disable_short;
@@ -29,6 +28,7 @@ public:
 	bool StartingGame(){ return StartGame; }
 
 	sf::Texture& bg_menuTexture(){ return bg_menu; }
+	sf::Texture& bg_tradeTexture(){ return bg_trade; }
 	sf::Texture& game_boardTexture(){ return game_board; }
 
 	sf::Texture& GetTwoPlayers(){ return twoPlayers; }
@@ -69,6 +69,10 @@ public:
 	{
 		// Loading Background Menu
 		if (!bg_menu.loadFromFile("graphics/bg_monopoly_logo.png"))
+			StartGame = false;
+
+		// Loading Background Trade
+		if (!bg_trade.loadFromFile("graphics/bg_trade.png"))
 			StartGame = false;
 
 		// Loading Monopoly Game Board

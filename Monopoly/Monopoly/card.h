@@ -5,7 +5,6 @@
 #include "rent.h"
 #include "player.h"
 
-
 class DrawCard
 {
 	sf::String description;

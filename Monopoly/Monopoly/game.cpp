@@ -468,7 +468,7 @@ void Game::StartGame()
 							ShownCard = false;
 							nextPlayerButton.first.activeButton(true);
 							card->SetVisibility(false);
-							card->AfterShowDescription();
+							card->Action(*activePlayer);
 						}
 					}
 					else
@@ -611,7 +611,7 @@ std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 		));
 
 	fields.emplace_back(new DrawCardField(								// KARTA KASY SPOŁECZNEJ POLE 2 (NR 1)
-		communityList, graphics, graphics.GetChestLogoTexture(), 2
+		communityList, graphics, graphics.GetChestLogoTexture(), L"KASA SPOŁECZNA", 2
 		));
 
 	fields.emplace_back(new DeedField(
@@ -626,7 +626,7 @@ std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 		));
 
 	fields.emplace_back(new DrawCardField(								// KARTA SZANSY POLE 7 (NR 1)
-		chanceList, graphics, graphics.GetChanceLogoTexture(), 7
+		chanceList, graphics, graphics.GetChanceLogoTexture(), L"SZANSA", 7
 		));
 
 	fields.emplace_back(new DeedField(
@@ -656,7 +656,7 @@ std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 		));
 
 	fields.emplace_back(new DrawCardField(								// KARTA KASY SPOŁECZNEJ POLE 17 (NR 2)
-		communityList, graphics, graphics.GetChestLogoTexture(), 17
+		communityList, graphics, graphics.GetChestLogoTexture(), L"KASA SPOŁECZNA", 17
 		));
 
 	fields.emplace_back(new DeedField(
@@ -671,7 +671,7 @@ std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 		));
 
 	fields.emplace_back(new DrawCardField(								// KARTA SZANSY POLE 22 (NR 2)
-		chanceList, graphics, graphics.GetChanceLogoTexture(), 22
+		chanceList, graphics, graphics.GetChanceLogoTexture(), L"SZANSA", 22
 		));
 
 	fields.emplace_back(new DeedField(
@@ -704,7 +704,7 @@ std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 		));
 
 	fields.emplace_back(new DrawCardField(								// KARTA KASY SPOŁECZNEJ POLE 33 (NR 3)
-		communityList, graphics, graphics.GetChestLogoTexture(), 33
+		communityList, graphics, graphics.GetChestLogoTexture(), L"KASA SPOŁECZNA", 33
 		));
 
 	fields.emplace_back(new DeedField(
@@ -715,7 +715,7 @@ std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 		));
 
 	fields.emplace_back(new DrawCardField(								// KARTA SZANSY POLE 36 (NR 3)
-		chanceList, graphics, graphics.GetChanceLogoTexture(), 36
+		chanceList, graphics, graphics.GetChanceLogoTexture(), L"SZANSA", 36
 		));
 
 	fields.emplace_back(new DeedField(
@@ -729,11 +729,9 @@ std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 }
 void Game::CreateChanceList(vector<DrawCard>& chanceCard)
 {
-	chanceCard.emplace_back(L"Teścik1 kochani moi");
+	chanceCard.emplace_back(CashTransaction(L"Teścik1 kochani moi", 20));
 	chanceCard.emplace_back(L"Teścik2 kochani moi");
 	chanceCard.emplace_back(L"Teścik3 kochani moi");
-	//chanceCard.emplace_back(L"Teścik4 kochani moi");
-	//chanceCard.emplace_back(L"Teścik5 kochani moi");
 
 }
 void Game::CreateCommunityList(vector<DrawCard>& communityCard)

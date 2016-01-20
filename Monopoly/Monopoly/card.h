@@ -5,24 +5,6 @@
 #include "rent.h"
 #include "player.h"
 
-class DrawCard
-{
-	sf::String description;
-	bool wasUsed;
-
-public:
-	DrawCard(const sf::String& description, bool wasUsed = false) 
-		:
-		description(description),
-		wasUsed(wasUsed)
-	{
-		
-	}
-	sf::String& GetDescrition(){ return description; }
-	bool cardWasUsed(){ return wasUsed; }
-	void SetUsed(bool status){ wasUsed = status; }
-};
-
 class DeedCard
 {
 	Player* owner;

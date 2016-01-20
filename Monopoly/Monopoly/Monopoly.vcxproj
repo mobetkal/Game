@@ -86,6 +86,7 @@
     <ClInclude Include="cardstatus.h" />
     <ClInclude Include="DetectMemoryLeaks.h" />
     <ClInclude Include="dice.h" />
+    <ClInclude Include="drawcard.h" />
     <ClInclude Include="field.h" />
     <ClInclude Include="frame.h" />
     <ClInclude Include="game.h" />

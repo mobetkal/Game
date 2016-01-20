@@ -68,5 +68,8 @@
     <ClInclude Include="DetectMemoryLeaks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="drawcard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

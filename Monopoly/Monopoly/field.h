@@ -4,6 +4,7 @@
 #include <list>
 #include "card.h"
 #include "buttontext.h"
+#include "drawcard.h"
 
 class Field : public sf::Drawable, public sf::Transformable
 {
@@ -80,7 +81,7 @@ class DrawCardField : public Field
 	}
 	
 public:
-	DrawCardField(std::vector<DrawCard>& cards, Graphics& gameGraphics, sf::Texture& SpecialTexture, const unsigned int& area)
+	DrawCardField(std::vector<DrawCard>& cards, Graphics& gameGraphics, sf::Texture& SpecialTexture, const sf::String& title, unsigned int area)
 		: 
 		cards(cards), 
 		RedCardTexture(gameGraphics.GetRedCardTexture()),
@@ -91,7 +92,9 @@ public:
 	{
 		this->RedCardTexture.setSmooth(true);
 		this->SpecialTexture.setSmooth(true);
+		ReloadCardsList();
 
+		texts.emplace_back(ButtonText(sf::Text(title, this->CardFont, 17), sf::Color::Black, 450, true));
 		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", this->CardFont, 12), sf::Color::Black, 478, true));
 
 		graphics.emplace_back(this->RedCardTexture, (700 - 450) / 2, (700 - 290) / 2);
@@ -103,30 +106,24 @@ public:
 	void ShowDescription()
 	{
 		graphics.pop_back();
-		if (!cards.front().cardWasUsed())
-			texts.emplace_back(ButtonText(sf::Text(cards.front().GetDescrition(), CardFont, 14), sf::Color::White, 378, true));
-		else
-		{
+		if (cards.front().cardWasUsed())
 			ReloadCardsList();
-			texts.emplace_back(ButtonText(sf::Text(cards.front().GetDescrition(), CardFont, 14), sf::Color::White, 378, true));
-		}
-	}
-	void AfterShowDescription()
-	{
-		graphics.emplace_back(this->SpecialTexture, (700 - 450) / 2, (700 - 290) / 2);
-		cards.emplace_back(texts.back().GetText().getString(), true);
-		texts.pop_back();
-		cards.erase(cards.begin());
+		texts.emplace_back(ButtonText(sf::Text(cards.front().GetDescrition(), CardFont, 14), sf::Color::White, 378, true));
 	}
 	void ReloadCardsList()
 	{
 		std::random_shuffle(cards.begin(), cards.end());
+		//std::random_shuffle(cards.begin(), cards.end()); // Second random_shuffle
 		for (auto& card : cards)
 			card.SetUsed(false);
 	}
-	void Action(Player& player) override
+	void Action(Player& activePlayer) override
 	{
-		//cout << "Karta szansy" << endl;
+		//cards.front().DrawCardAction(activePlayer);
+		graphics.emplace_back(this->SpecialTexture, (float)(700 - 450) / 2, (float)(700 - 290) / 2);
+		cards.emplace_back(texts.back().GetText().getString(), true);
+		texts.pop_back();
+		cards.erase(cards.begin());
 	}
 	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
 	{

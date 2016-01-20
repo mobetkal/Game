@@ -5,6 +5,7 @@
 #include "graphics.h"
 #include "card.h"
 #include "dice.h"
+#include "drawcard.h"
 class Field;
 
 enum class GameState { MODE_MENU, MAIN_MENU, PLAYERS_MENU, SET_NAMES, START_GAME, TRADE, END };

@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <Windows.h>
 #include "game.h"
+#include "DetectMemoryLeaks.h"
 
 void MemoryLeaks()
 {

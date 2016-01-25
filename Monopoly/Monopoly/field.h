@@ -22,6 +22,7 @@ public:
 	virtual void Action(Player& player) = 0;
 	virtual std::vector<ButtonSprite>& ShowGraphics() = 0;
 	virtual std::vector<ButtonText>& ShowTexts() = 0;
+	virtual void DoWork(ButtonSprite* hoverImgButton, Player*& activePlayer, bool& CloseCard, bool& ShownCard, ButtonSprite& nextPlayerButton) = 0;
 	virtual void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) = 0;
 
 	sf::Vector2i ChooseCard(unsigned int area)
@@ -60,17 +61,36 @@ public:
 			return sf::Vector2i(-1, -1);
 		}
 	}
+	int AddTextCenterFormat(std::vector<ButtonText>& texts, const sf::String& text, const sf::Font& CardFont, unsigned int characterSize, const sf::Color& color, float y, int pixel, bool MakeStyle)
+	{
+		sf::String string = "";
+		int lineNumber = 0;
+		int size = text.getSize();
+		for (int i = 0; i <= size; ++i)
+		{
+			if (text[i] == '\n' || text[i] == '\0')
+			{
+				texts.emplace_back(ButtonText(sf::Text(string, CardFont, characterSize), color, y + pixel * lineNumber++, MakeStyle));
+				string.clear();
+			}
+			else
+				string += text[i];
+		}
+		return lineNumber;
+	}
 };
 
 class DrawCardField : public Field
 {
-	std::vector<DrawCard>& cards;
+	std::vector<DrawCard*>& cards;
 	std::vector<ButtonSprite> graphics;
 	std::vector<ButtonText> texts;
 	sf::Texture RedCardTexture;
 	sf::Font CardFont;
 	sf::Texture SpecialTexture;
+	sf::String title;
 	bool visibility;
+	int lineNumber = 0;
 
 	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
 	{
@@ -81,20 +101,20 @@ class DrawCardField : public Field
 	}
 	
 public:
-	DrawCardField(std::vector<DrawCard>& cards, Graphics& gameGraphics, sf::Texture& SpecialTexture, const sf::String& title, unsigned int area)
+	DrawCardField(std::vector<DrawCard*>& cards, Graphics& gameGraphics, sf::Texture& SpecialTexture, const sf::String& title, unsigned int area)
 		: 
 		cards(cards), 
 		RedCardTexture(gameGraphics.GetRedCardTexture()),
 		CardFont(gameGraphics.GetCardFont()),
 		Field(area, false),
 		visibility(false),
-		SpecialTexture(SpecialTexture)
+		SpecialTexture(SpecialTexture),
+		title(title)
 	{
 		this->RedCardTexture.setSmooth(true);
 		this->SpecialTexture.setSmooth(true);
 		ReloadCardsList();
 
-		texts.emplace_back(ButtonText(sf::Text(title, this->CardFont, 17), sf::Color::Black, 450, true));
 		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", this->CardFont, 12), sf::Color::Black, 478, true));
 
 		graphics.emplace_back(this->RedCardTexture, (700 - 450) / 2, (700 - 290) / 2);
@@ -102,28 +122,51 @@ public:
 	}
 	bool isVisible(){ return visibility; }
 	void SetVisibility(bool status){ visibility = status; }
-	DrawCard& GetCard() { return cards.front(); }
+	DrawCard* GetCard() { return cards.front(); }
 	void ShowDescription()
 	{
 		graphics.pop_back();
-		if (cards.front().cardWasUsed())
+		if (cards.front()->cardWasUsed())
 			ReloadCardsList();
-		texts.emplace_back(ButtonText(sf::Text(cards.front().GetDescrition(), CardFont, 14), sf::Color::White, 378, true));
+		texts.emplace_back(ButtonText(sf::Text(title, this->CardFont, 35), sf::Color::Black, 250, true));
+		lineNumber = AddTextCenterFormat(texts, cards.front()->GetDescrition(), CardFont, 17, sf::Color::White, 320.0f, 23, true);
+	}
+	void DoWork(ButtonSprite* hoverImgButton, Player*& activePlayer, bool& CloseCard, bool& ShownCard, ButtonSprite& nextPlayerButton) override
+	{
+		if (hoverImgButton == &graphics[0] && !visibility) 
+		{
+			ShowDescription();
+			visibility = true;
+			CloseCard = false;
+		}
+		else if (visibility)
+		{
+			ShownCard = false;
+			nextPlayerButton.activeButton(true);
+			visibility = false;
+			int area = activePlayer->GetPawn().GetArea();
+			Action(*activePlayer);
+			if (area == activePlayer->GetPawn().GetArea())
+				CloseCard = true;
+		}
 	}
 	void ReloadCardsList()
 	{
 		std::random_shuffle(cards.begin(), cards.end());
-		//std::random_shuffle(cards.begin(), cards.end()); // Second random_shuffle
+		std::random_shuffle(cards.begin(), cards.end()); // Second random_shuffle
+		std::random_shuffle(cards.begin(), cards.end()); // Third random_shuffle
 		for (auto& card : cards)
-			card.SetUsed(false);
+			card->SetUsed(false);
 	}
 	void Action(Player& activePlayer) override
 	{
-		//cards.front().DrawCardAction(activePlayer);
-		graphics.emplace_back(this->SpecialTexture, (float)(700 - 450) / 2, (float)(700 - 290) / 2);
-		cards.emplace_back(texts.back().GetText().getString(), true);
-		texts.pop_back();
+		cards.front()->DrawCardAction(activePlayer);
+		cards.push_back(cards.front());
 		cards.erase(cards.begin());
+		for (int i = 0; i <= lineNumber; ++i)
+			texts.pop_back();
+		lineNumber = 0;
+		graphics.emplace_back(this->SpecialTexture, (float)(700 - 450) / 2, (float)(700 - 290) / 2);
 	}
 	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
 	{
@@ -133,7 +176,6 @@ public:
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override { return texts; }
 };
-
 class SpecialField : public Field
 {
 	SpecialCard card;
@@ -194,6 +236,21 @@ public:
 			}
 		}
 	}
+	void DoWork(ButtonSprite* hoverImgButton, Player*& activePlayer, bool& CloseCard, bool& ShownCard, ButtonSprite& nextPlayerButton) override
+	{
+		unsigned int price = 0;
+		Player* owner = nullptr;
+		GetOwnerAndPrice(owner, price, activePlayer);
+
+		if (owner != nullptr && owner != activePlayer)
+		{
+			owner->AddMoney(price);
+			activePlayer->SpendMoney(price);
+		}
+		CloseCard = true;
+		ShownCard = false;
+		nextPlayerButton.activeButton(true);
+	}
 	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
 	{
 		owner = card.GetOwner();
@@ -212,7 +269,6 @@ public:
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override { return texts; }
 };
-
 class TrainField : public Field
 {
 	TrainCard card;
@@ -266,6 +322,21 @@ public:
 			}
 		}
 	}
+	void DoWork(ButtonSprite* hoverImgButton, Player*& activePlayer, bool& CloseCard, bool& ShownCard, ButtonSprite& nextPlayerButton) override
+	{
+		unsigned int price = 0;
+		Player* owner = nullptr;
+		GetOwnerAndPrice(owner, price, activePlayer);
+
+		if (owner != nullptr && owner != activePlayer)
+		{
+			owner->AddMoney(price);
+			activePlayer->SpendMoney(price);
+		}
+		CloseCard = true;
+		ShownCard = false;
+		nextPlayerButton.activeButton(true);
+	}
 
 	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
 	{
@@ -285,7 +356,6 @@ public:
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override { return texts; }
 };
-
 class DeedField : public Field
 {
 	DeedCard card;
@@ -352,7 +422,20 @@ public:
 			}
 		}
 	}
+	void DoWork(ButtonSprite* hoverImgButton, Player*& activePlayer, bool& CloseCard, bool& ShownCard, ButtonSprite& nextPlayerButton) override
+	{
+		Player* owner = card.GetOwner();
+		int price = card.Get_rents().Get_withoutHouse();
 
+		if (owner != nullptr && owner != activePlayer)
+		{
+			owner->AddMoney(price);
+			activePlayer->SpendMoney(price);
+		}
+		CloseCard = true;
+		ShownCard = false;
+		nextPlayerButton.activeButton(true);
+	}
 	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
 	{
 		owner = card.GetOwner();
@@ -361,4 +444,119 @@ public:
 
 	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
 	std::vector<ButtonText>& ShowTexts() override {	return texts; }
+};
+class GoToJailField : public Field
+{
+	std::vector<ButtonSprite> graphics;
+	std::vector<ButtonText> texts;
+	sf::Texture CardTexture;
+	sf::Texture SpecialTexture;
+	sf::Font CardFont;
+
+	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+	{
+		for (auto elem : graphics)
+			target.draw(elem.GetSprite());
+		for (auto text : texts)
+			target.draw(text.GetText());
+	}
+
+public:
+	GoToJailField(Graphics& gameGraphics, const unsigned int& area)
+		:
+		CardTexture(gameGraphics.GetCardTexture()),
+		SpecialTexture(gameGraphics.GetGoToJailCardGraphicsTexture()),
+		Field(area, false),
+		CardFont(gameGraphics.GetCardFont())
+	{
+		this->CardTexture.setSmooth(true);
+
+		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", CardFont, 12), sf::Color::Black, 559, true));
+
+		graphics.emplace_back(this->CardTexture, (700 - 290) / 2, 125.0f);
+		graphics.emplace_back(this->SpecialTexture, (700 - 290) / 2, 125.0f);
+	}
+
+	void DoWork(ButtonSprite* hoverImgButton, Player*& activePlayer, bool& CloseCard, bool& ShownCard, ButtonSprite& nextPlayerButton) override
+	{
+		if (hoverImgButton != &graphics[0])
+		{
+			ShownCard = false;
+			nextPlayerButton.activeButton(true);
+			Action(*activePlayer);
+			CloseCard = true;
+		}
+	}
+	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
+	{
+		price = 0;
+		owner = nullptr;
+	}
+	void Action(Player& player) override
+	{
+		player.SetBlock(2, true);
+	}
+
+	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
+	std::vector<ButtonText>& ShowTexts() override { return texts; }
+};
+class PayTaxField : public Field
+{
+	std::vector<ButtonSprite> graphics;
+	std::vector<ButtonText> texts;
+	sf::Texture CardTexture;
+	sf::Font CardFont;
+	sf::Texture SpecialTexture;
+	int money;
+
+	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+	{
+		for (auto elem : graphics)
+			target.draw(elem.GetSprite());
+		for (auto text : texts)
+			target.draw(text.GetText());
+	}
+
+public:
+	PayTaxField(Graphics& gameGraphics, const sf::Texture& SpecialTexture, const sf::String& title, int money, const unsigned int& area)
+		:
+		CardTexture(gameGraphics.GetCardTexture()),
+		Field(area, false),
+		CardFont(gameGraphics.GetCardFont()),
+		SpecialTexture(SpecialTexture),
+		money(money)
+	{
+		this->CardTexture.setSmooth(true);
+		this->SpecialTexture.setSmooth(true);
+		AddTextCenterFormat(texts, title, CardFont, 25, sf::Color::Black, 145.0f, 32, true);
+		sf::String text = L"Skarb Państwa upomniał się\no swoją należność.\n\nPobrano z konta ";
+		text += std::to_string(money);
+		text += L" zł.";
+		AddTextCenterFormat(texts, text, CardFont, 19, sf::Color::Black, 448.0f, 25, false);
+		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", CardFont, 12), sf::Color::Black, 559, true));
+
+		graphics.emplace_back(this->CardTexture, (700 - 290) / 2, 125.0f);
+		graphics.emplace_back(this->SpecialTexture, (700 - 290) / 2, 110.0f);
+	}
+	void Action(Player& player) override
+	{
+		player.SpendMoney(money);
+	}
+	void DoWork(ButtonSprite* hoverImgButton, Player*& activePlayer, bool& CloseCard, bool& ShownCard, ButtonSprite& nextPlayerButton) override
+	{
+		if (hoverImgButton != &graphics[0])
+		{
+			ShownCard = false;
+			Action(*activePlayer);
+			nextPlayerButton.activeButton(true);
+			CloseCard = true;
+		}
+	}
+	void GetOwnerAndPrice(Player*& owner, unsigned int& price, Player* activePlayer) override
+	{
+		owner = nullptr;
+		price = 0;
+	}
+	std::vector<ButtonSprite>& ShowGraphics() override { return graphics; }
+	std::vector<ButtonText>& ShowTexts() override { return texts; }
 };

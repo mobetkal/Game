@@ -11,6 +11,7 @@ class Field;
 enum class GameState { MODE_MENU, MAIN_MENU, PLAYERS_MENU, SET_NAMES, START_GAME, TRADE, END };
 #include "buttonsprite.h"
 #include "buttontext.h"
+#include "DetectMemoryLeaks.h"
 
 class Game
 {
@@ -18,7 +19,7 @@ class Game
 	GameState state;
 	sf::Sprite bg, tradeBG;
 	std::vector<sf::String> names;
-	std::vector<DrawCard> chanceList, communityList;
+	std::vector<DrawCard*> chanceList, communityList;
 	std::list<Field*> fields;
 	Graphics graphics;
 
@@ -52,8 +53,8 @@ public:
 	void CreatePlayersAndPawns();
 	void CreateGameTextButtons();
 	std::list<Field*> CreateList_ptrField(Graphics& graphics);
-	void CreateChanceList(std::vector<DrawCard>& chanceCard);
-	void CreateCommunityList(std::vector<DrawCard>& communityCard);
+	void CreateChanceList(std::vector<DrawCard*>& chanceCard);
+	void CreateCommunityList(std::vector<DrawCard*>& communityCard);
 	void CreateTrade(Player* activePlayer, Player* secondPlayer);
 
 	//Methods of checking
@@ -61,12 +62,32 @@ public:
 	Player* CheckActivePlayer();
 	ButtonText* CheckHoverTextButtonInMenu(std::vector<ButtonText>& textButtons);
 	ButtonSprite* CheckHoverSpriteButtonInMenu(std::vector<ButtonSprite>& imgButtons);
+	ButtonSprite* Game::CheckHoverSpriteInGame(
+		Player* activePlayer,
+		Field*& FindedCard,
+		Field* ShowBigCard,
+		ButtonSprite& rollDiceButton,
+		ButtonSprite& nextPlayerButton,
+		ButtonSprite& bidButton,
+		ButtonSprite& buyButton,
+		ButtonSprite& buildButton,
+		ButtonSprite& depositButton,
+		ButtonSprite& tradeButton
+		);
 
 	//Methods of finding
 	Field* FindField(std::list<Field*> list, const int ID);
 
 	//Response Methods
 	void DrawButtonOnWindow(sf::RenderTarget& target, std::pair<ButtonSprite, ButtonText>& button);
+	void DrawFindedCardAndSetAlerts(
+		Field*& FindedCard, 
+		Player*& activePlayer, 
+		sf::Text& textButton, 
+		std::pair<ButtonSprite, ButtonText>& buyButton,
+		std::pair<ButtonSprite, ButtonText>& bidButton,
+		bool& ShownCard
+		);
 	void GoToNextPlayer(Player* activePlayer, ButtonText& button);
 	bool RollDiceAfterThrowingDoublet(Player* activePlayer, Dice& firstDice, Dice& secondDice, ButtonText& button, bool ShownCard);
 	bool RollDiceBeforeThrowingDoublet(Player* activePlayer, Dice& firstDice, Dice& secondDice, ButtonText& button, bool ShownCard);

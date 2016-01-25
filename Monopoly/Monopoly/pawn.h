@@ -34,7 +34,7 @@ class Pawn
 		possition.emplace_back(std::make_pair(211.0f, 633.0f));
 		possition.emplace_back(std::make_pair(154.0f, 633.0f));
 		possition.emplace_back(std::make_pair(97.0f, 633.0f));
-		possition.emplace_back(jailArea); // LEFT BOTTOM SITE -> JAIL => Dodaj Mnie! :P
+		possition.emplace_back(jailArea); // LEFT BOTTOM SITE
 		possition.emplace_back(std::make_pair(15.0f, 551.0f));
 		possition.emplace_back(std::make_pair(15.0f, 494.0f));
 		possition.emplace_back(std::make_pair(15.0f, 437.0f));
@@ -82,7 +82,11 @@ public:
 	sf::Sprite& GetSprite()	{ return pawn; }
 	void SetArea(int newArea) { area = newArea; }
 	int GetArea() { return area; }
-	void GoToJail() { pawn.setPosition(40.0f, 609.0f); }
+	void GoToJail() 
+	{ 
+		pawn.setPosition(40.0f, 609.0f); 
+		area = 10;
+	}
 	int GetLastRollDice(){ return LastRollDice; }
 	Color SetColorPawn(unsigned int color)
 	{

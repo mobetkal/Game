@@ -33,9 +33,7 @@ class Player : public sf::Drawable, public sf::Transformable
 			for (auto& card : test->GetVectorCards())
 			{
 				if (card.GetBusy())
-				{
 					target.draw(card.GetVertCard());
-				}
 				else
 				{
 					states.texture = &card.GetMiniCardTexture();
@@ -139,7 +137,12 @@ public:
 	{ 
 		blockMovement = rounds; 
 		if (Jail)
+		{
 			pawn.GoToJail();
+			activeMovement = false;
+			doublet = false;
+		}
+			
 	}
 	int AccoundStatus()	{ return money;	}
 	bool ThrewDoublet() { return doublet; }

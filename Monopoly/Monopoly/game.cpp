@@ -30,7 +30,7 @@ Game::Game() : window(VideoMode(1100, 700, 32), "", Style::None), graphics(Graph
 		state = GameState::MODE_MENU;
 	else
 	{
-		MessageBox(0, "Monopoly::ERROR!\n\nBrak plików!\nZainstaluj ponownie.", "Monopoly::ERROR", MB_OK);
+		MessageBox(0, "Monopoly::ERROR!\n\nBrak plików!\nZainstaluj program ponownie.", "Monopoly::ERROR", MB_OK);
 		state = GameState::END;
 	}
 		
@@ -39,6 +39,10 @@ Game::~Game()
 {
 	for (auto& field : fields)
 		delete field;
+	for (auto& card : chanceList)
+		delete card;
+	for (auto& card : communityList)
+		delete card;
 }
 
 //Short Methods
@@ -364,7 +368,6 @@ void Game::StartGame()
 	while (state == GameState::START_GAME)
 	{
 		Vector2f mouse(Mouse::getPosition(window));
-		hoverImgButton = nullptr;
 		activePlayer = CheckActivePlayer();
 		hoverStatusCard = CheckHoverStatusCard();
 
@@ -372,7 +375,7 @@ void Game::StartGame()
 
 		if (activePlayer->IsActiveField())
 		{
-			FindedCard = FindField(fields, activePlayer->GetPawn().GetArea()); //
+			FindedCard = FindField(fields, activePlayer->GetPawn().GetArea()); //activePlayer->GetPawn().GetArea()
 			if (!FindedCard)
 				activePlayer->SetActiveField(false);
 		}
@@ -382,40 +385,18 @@ void Game::StartGame()
 			activePlayer->SetActiveField(false);
 		}
 
-		if (rollDiceButton.first.GetSprite().getGlobalBounds().contains(mouse))
-			hoverImgButton = &rollDiceButton.first;
-		else if (nextPlayerButton.first.GetSprite().getGlobalBounds().contains(mouse))
-			hoverImgButton = &nextPlayerButton.first;
-		else if (dynamic_cast<DrawCardField*>(FindedCard) && FindedCard->ShowGraphics().begin()->GetSprite().getGlobalBounds().contains(mouse))
-			hoverImgButton = &(FindedCard->ShowGraphics()[0]);
+		hoverImgButton = CheckHoverSpriteInGame(
+			activePlayer, FindedCard, ShowBigCard, 
+			rollDiceButton.first, nextPlayerButton.first,
+			bidButton.first, buyButton.first,
+			buildButton.first, depositButton.first, tradeButton.first
+			);
 
-		if (activePlayer->IsActiveField())
-		{
-			if (buyButton.first.GetSprite().getGlobalBounds().contains(mouse))
-				hoverImgButton = &buyButton.first;
-			else if (bidButton.first.GetSprite().getGlobalBounds().contains(mouse))
-				hoverImgButton = &bidButton.first;
-		}
-		if (!activePlayer->IsActiveField())
-		{
-			if (ShowBigCard)
-			{
-				if (buildButton.first.GetSprite().getGlobalBounds().contains(mouse))
-					hoverImgButton = &buildButton.first;
-				else if (depositButton.first.GetSprite().getGlobalBounds().contains(mouse))
-					hoverImgButton = &depositButton.first;
-			}
-			else if (tradeButton.first.GetSprite().getGlobalBounds().contains(mouse))
-			{
-				hoverImgButton = &tradeButton.first;
-			}
-		}
 		ActivateRollAndSkipPlayerButtons(activePlayer, rollDiceButton.first, nextPlayerButton.first);
 
 		Event event;
 		while (window.pollEvent(event))
 		{
-
 			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
 			{
 				state = GameState::END;
@@ -424,7 +405,7 @@ void Game::StartGame()
 
 			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
 			{
-				if (hoverImgButton == &tradeButton.first && tradeButton.first.IsActive())
+				//if (hoverImgButton == &tradeButton.first && tradeButton.first.IsActive())
 					//CreateTrade(activePlayer, activePlayer+1);
 
 				if (hoverStatusCard && !activePlayer->IsActiveField())
@@ -452,41 +433,8 @@ void Game::StartGame()
 					activePlayer->SetActiveMovement(false);
 				}
 
-				if (ShownCard && !bidButton.first.IsActive() && !buyButton.first.IsActive()) // Kiedy karty nie da się kupić, bo jest kogoś :P
-				{
-					if (DrawCardField* card = dynamic_cast<DrawCardField*>(FindedCard))
-					{
-						if (hoverImgButton == &(FindedCard->ShowGraphics()[0]) && !card->isVisible())
-						{
-							card->ShowDescription();
-							card->SetVisibility(true);
-							CloseCard = false;
-						}
-						else if (card->isVisible())
-						{
-							CloseCard = true;
-							ShownCard = false;
-							nextPlayerButton.first.activeButton(true);
-							card->SetVisibility(false);
-							card->Action(*activePlayer);
-						}
-					}
-					else
-					{
-						Player* owner = nullptr;
-						unsigned int price = 0;
-						FindedCard->GetOwnerAndPrice(owner, price, activePlayer);
-
-						if (owner != nullptr && owner != activePlayer)
-						{
-							owner->AddMoney(price);
-							activePlayer->SpendMoney(price);
-						}
-						CloseCard = true;
-						ShownCard = false;
-						nextPlayerButton.first.activeButton(true);
-					}
-				}
+				if (ShownCard && !bidButton.first.IsActive() && !buyButton.first.IsActive() && FindedCard) // Kiedy karty nie da się kupić, bo jest kogoś :P
+					FindedCard->DoWork(hoverImgButton, activePlayer, CloseCard, ShownCard, nextPlayerButton.first);
 
 				if (hoverImgButton == &rollDiceButton.first && !activePlayer->ThrewDoublet() && rollDiceButton.first.IsActive())
 				{
@@ -502,7 +450,6 @@ void Game::StartGame()
 					tradeButton.first.activeButton(false);
 					GoToNextPlayer(activePlayer, textButtons[1]);
 				}
-
 			}
 		}
 		window.clear();
@@ -519,37 +466,7 @@ void Game::StartGame()
 		for (auto& button : textButtons)
 			window.draw(button.GetText());
 		if (FindedCard != nullptr && activePlayer->IsActiveField() && !CloseCard)
-		{
-			window.draw(*FindedCard);
-			Player* owner = nullptr;
-			unsigned int price = 0;
-			FindedCard->GetOwnerAndPrice(owner, price, activePlayer);
-			if (owner != nullptr)
-			{
-				buyButton.first.activeButton(false);
-				//bid.first.activeButton(false);
-				if (owner != activePlayer)
-					textButtons[1].GetText().setString(L"Karta jest własnością " + owner->GetString() + "\nPobrano czynsz " + to_string(price) + L" zł");
-				else
-					textButtons[1].GetText().setString(L"Karta jest Twoją własnością!");
-			}
-			else
-				buyButton.first.activeButton(true);
-
-			bidButton.first.activeButton(false); // Brak możliwości licytowania
-
-			if (FindedCard->ShowButtonsOnCard())
-			{
-				DrawButtonOnWindow(window, buyButton);
-				DrawButtonOnWindow(window, bidButton);
-			}
-			else
-			{
-				bidButton.first.activeButton(false);
-				buyButton.first.activeButton(false);
-			}
-			ShownCard = true;
-		}
+			DrawFindedCardAndSetAlerts(FindedCard, activePlayer, textButtons[1].GetText(), buyButton, bidButton, ShownCard);
 		else if (CloseCard)
 		{
 			CloseCard = false;
@@ -617,7 +534,9 @@ std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ULICA STALOWA", CardFont, Rent(4, 20, 60, 180, 320), 60, 50, 50, 30), graphics, Color(78, 61, 113), 3
 		));
-	////fields.emplace_back(4); -200ZŁ 4
+	fields.emplace_back(new PayTaxField(
+		graphics, graphics.GetTaxLogoTexture(), L"PODATEK\nDOCHODOWY\nZAPŁAĆ", 200, 4
+		));
 	fields.emplace_back(new TrainField(
 		TrainCard("DWORZEC ZACHODNI", CardFont, 200, 25, 100), graphics, 5
 		));
@@ -695,7 +614,9 @@ std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 	fields.emplace_back(new DeedField(
 		DeedCard(L"NOWY ŚWIAT", CardFont, Rent(24, 120, 360, 850, 1025), 280, 150, 150, 140), graphics, Color(237, 247, 140), 29
 		));
-	//GO TO JAIL! 30
+	fields.emplace_back(new GoToJailField(									// POLE 30 - GO TO JAIL!
+		graphics, 30
+		));
 	fields.emplace_back(new DeedField(
 		DeedCard(L"PLAC TRZECH KRZYŻY", CardFont, Rent(26, 130, 390, 900, 1100), 300, 200, 200, 150), graphics, Color(83, 148, 114), 31
 		));
@@ -721,25 +642,47 @@ std::list<Field*> Game::CreateList_ptrField(Graphics& graphics)
 	fields.emplace_back(new DeedField(
 		DeedCard(L"BELWEDERSKA", CardFont, Rent(35, 175, 500, 1100, 1300), 350, 200, 200, 175), graphics, Color(56, 79, 146), 37
 		));
-	//PODATEK -100ZŁ 38
+	fields.emplace_back(new PayTaxField(
+		graphics, graphics.GetSurtaxLogoTexture(), L"DOMIAR\nPODATKOWY ZAPŁAĆ", 100, 38
+		));
 	fields.emplace_back(new DeedField(
 		DeedCard(L"ALEJE UJAZDOWSKIE", CardFont, Rent(50, 200, 600, 1400, 1700), 400, 200, 200, 200), graphics, Color(56, 79, 146), 39
 		));
 	return fields;
 }
-void Game::CreateChanceList(vector<DrawCard>& chanceCard)
+void Game::CreateChanceList(vector<DrawCard*>& chanceCard)
 {
-	chanceCard.emplace_back(CashTransaction(L"Teścik1 kochani moi", 20));
-	chanceCard.emplace_back(L"Teścik2 kochani moi");
-	chanceCard.emplace_back(L"Teścik3 kochani moi");
-
+	chanceCard.emplace_back(new CashTransaction(L"Grzywna.\nZapłać 20zł.", -20));
+	chanceCard.emplace_back(new CashTransaction(L"Bank wypłaca ci dywidendę w wysokości 50zł.", 50));
+	chanceCard.emplace_back(new CashTransaction(L"Otrzymałeś kredyt budowlany.\nPobierz 150zł.", 150));
+	chanceCard.emplace_back(new CashTransaction(L"Mandat za przekroczenie prędkości.\nZapłać 15zł.", -15));
+	chanceCard.emplace_back(new CashTransaction(L"Zapłać za szkołę, 150zł.", -150));
+	chanceCard.emplace_back(new CashTransaction(L"Wygrałeś konkurs krzyżówkowy.\nPobierz 100zł.", 100));
+	chanceCard.emplace_back(new CashTransaction(L"Honorarium lekarza.\nZapłać 50zł.", -50));
+	chanceCard.emplace_back(new GoToPoint(L"Przejdź na Plac Wilsona.\nJeśli miniesz po drodze START, pobierz 200zł", 24, 200, true));
+	chanceCard.emplace_back(new GoToPoint(L"Przejdź na Dworzec Gdański.\nJeśli miniesz po drodze START, pobierz 200zł", 15, 200, true));
+	chanceCard.emplace_back(new GoToPoint(L"Przejdź na ulicę Płowiecką.\nJeśli miniesz po drodze START, pobierz 200zł", 11, 200, true));
+	chanceCard.emplace_back(new GoToPoint(L"Przejdź na aleje Ujazdowskie.", 39, 0, false));
+	chanceCard.emplace_back(new GoToPoint(L"Przejdź na START.", 0, 200, true));
+	chanceCard.emplace_back(new GoOutFromJail(L"WYJDŹ BEZPŁATNIE Z WIĘZIENIA\n\nTę kartę możesz zatrzymać\ndo późniejszego wykorzystania."));
+	chanceCard.emplace_back(new GoToJail(L"Idź do WIĘZIENIA.\nPrzejdź prosto do WIĘZIENIA.\nNie przechodź przez START.\nNie pobieraj 200zł."));
 }
-void Game::CreateCommunityList(vector<DrawCard>& communityCard)
+void Game::CreateCommunityList(vector<DrawCard*>& communityCard)
 {
-	communityCard.emplace_back(L"Teścik1 skrzynki kochani moi");
-	communityCard.emplace_back(L"Teścik2 skrzunki kochani moi");
-	communityCard.emplace_back(L"Teścik3 skrzynki kochani moi");
-
+	communityCard.emplace_back(new GoToPoint(L"Przejdź na START.", 0, 200, true));
+	communityCard.emplace_back(new GoToPoint(L"Wróć na ulicę Konopacką.", 1, 0, false));
+	communityCard.emplace_back(new CashTransaction(L"Otrzymujesz 50zł za sprzedane akcje.", 50));
+	communityCard.emplace_back(new CashTransaction(L"Otrzymujesz odsetki od lokaty terminowej.\nPobierz 25zł.", 25));
+	communityCard.emplace_back(new CashTransaction(L"Honorarium lekarza.\nZapłać 50zł.", -50));
+	communityCard.emplace_back(new CashTransaction(L"Błąd bankowy na twoją korzyść.\nPobierz 200zł.", 200));
+	communityCard.emplace_back(new CashTransaction(L"Odziedziczyłeś w spadku 100zł.", 100));
+	communityCard.emplace_back(new CashTransaction(L"Wygrana druga nagroda w konkursie piękności.\nPobierz 10zł.", 10));
+	communityCard.emplace_back(new CashTransaction(L"Sprzedałeś obligacje.\nPobierz 100zł.", 100));
+	communityCard.emplace_back(new CashTransaction(L"Otrzymujesz zwrot podatku dochodowego.\nPobierz 20zł.", 20));
+	communityCard.emplace_back(new CashTransaction(L"Zapłać składkę ubezpieczeniową 50zł.", -50));
+	communityCard.emplace_back(new CashTransaction(L"Zapłać rachunek za szpital 100zł.", -100));
+	communityCard.emplace_back(new GoOutFromJail(L"WYJDŹ BEZPŁATNIE Z WIĘZIENIA\n\nTę kartę możesz zatrzymać\ndo późniejszego wykorzystania."));
+	communityCard.emplace_back(new GoToJail(L"Idź do WIĘZIENIA.\nPrzejdź prosto do WIĘZIENIA.\nNie przechodź przez START.\nNie pobieraj 200zł."));
 }
 void Game::CreateTrade(Player* activePlayer, Player* secondPlayer)
 {
@@ -864,6 +807,52 @@ ButtonSprite* Game::CheckHoverSpriteButtonInMenu(std::vector<ButtonSprite>& imgB
 		button.activeButton(true);
 	return nullptr;
 }
+ButtonSprite* Game::CheckHoverSpriteInGame(
+	Player* activePlayer,
+	Field*& FindedCard,
+	Field* ShowBigCard,
+	ButtonSprite& rollDiceButton, 
+	ButtonSprite& nextPlayerButton, 
+	ButtonSprite& bidButton, 
+	ButtonSprite& buyButton,
+	ButtonSprite& buildButton,
+	ButtonSprite& depositButton,
+	ButtonSprite& tradeButton
+	)
+{
+	Vector2f mouse(Mouse::getPosition(window));
+	if (rollDiceButton.GetSprite().getGlobalBounds().contains(mouse))
+		return &rollDiceButton;
+	else if (nextPlayerButton.GetSprite().getGlobalBounds().contains(mouse))
+		return &nextPlayerButton;
+	else if (dynamic_cast<DrawCardField*>(FindedCard) && FindedCard->ShowGraphics().begin()->GetSprite().getGlobalBounds().contains(mouse))
+		return &(FindedCard->ShowGraphics()[0]);
+	else if (dynamic_cast<GoToJailField*>(FindedCard) && FindedCard->ShowGraphics().begin()->GetSprite().getGlobalBounds().contains(mouse))
+		return &(FindedCard->ShowGraphics()[0]);
+	else if (dynamic_cast<PayTaxField*>(FindedCard) && FindedCard->ShowGraphics().begin()->GetSprite().getGlobalBounds().contains(mouse))
+		return &(FindedCard->ShowGraphics()[0]);
+
+	if (activePlayer->IsActiveField())
+	{
+		if (buyButton.GetSprite().getGlobalBounds().contains(mouse))
+			return &buyButton;
+		else if (bidButton.GetSprite().getGlobalBounds().contains(mouse))
+			return &bidButton;
+	}
+	if (!activePlayer->IsActiveField())
+	{
+		if (ShowBigCard)
+		{
+			if (buildButton.GetSprite().getGlobalBounds().contains(mouse))
+				return &buildButton;
+			else if (depositButton.GetSprite().getGlobalBounds().contains(mouse))
+				return &depositButton;
+		}
+		else if (tradeButton.GetSprite().getGlobalBounds().contains(mouse))
+			return &tradeButton;
+	}
+	return nullptr;
+}
 
 //Methods of finding
 Field* Game::FindField(list<Field*> list, const int ID)
@@ -884,6 +873,45 @@ void Game::DrawButtonOnWindow(sf::RenderTarget& target, pair<ButtonSprite, Butto
 {
 	target.draw(button.first.GetSprite());
 	target.draw(button.second.GetText());
+}
+void Game::DrawFindedCardAndSetAlerts(
+	Field*& FindedCard,
+	Player*& activePlayer,
+	sf::Text& textButton,
+	pair<ButtonSprite, ButtonText>& buyButton,
+	pair<ButtonSprite, ButtonText>& bidButton,
+	bool& ShownCard
+	)
+{
+	window.draw(*FindedCard);
+	Player* owner = nullptr;
+	unsigned int price = 0;
+	FindedCard->GetOwnerAndPrice(owner, price, activePlayer);
+	if (owner != nullptr)
+	{
+		buyButton.first.activeButton(false);
+		//bid.first.activeButton(false);
+		if (owner != activePlayer)
+			textButton.setString(L"Karta jest własnością " + owner->GetString() + "\nPobrano czynsz " + to_string(price) + L" zł");
+		else
+			textButton.setString(L"Karta jest Twoją własnością!");
+	}
+	else
+		buyButton.first.activeButton(true);
+
+	bidButton.first.activeButton(false); // Brak możliwości licytowania
+
+	if (FindedCard->ShowButtonsOnCard())
+	{
+		DrawButtonOnWindow(window, buyButton);
+		DrawButtonOnWindow(window, bidButton);
+	}
+	else
+	{
+		bidButton.first.activeButton(false);
+		buyButton.first.activeButton(false);
+	}
+	ShownCard = true;
 }
 void Game::GoToNextPlayer(Player* activePlayer, ButtonText& button)
 {

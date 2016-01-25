@@ -17,6 +17,9 @@ class Graphics
 	sf::Texture WaterSupplyLogo;
 	sf::Texture ChanceLogo;
 	sf::Texture ChestLogo;
+	sf::Texture TaxLogo;
+	sf::Texture SurtaxLogo;
+	sf::Texture GoToJailCardGraphics;
 
 	sf::Font PalabFont;
 	sf::Font MenuFont;
@@ -59,6 +62,9 @@ public:
 	sf::Texture& GetWaterSupplyLogoTexture(){ return WaterSupplyLogo; }
 	sf::Texture& GetChestLogoTexture(){ return ChestLogo; }
 	sf::Texture& GetChanceLogoTexture(){ return ChanceLogo; }
+	sf::Texture& GetTaxLogoTexture(){ return TaxLogo; }
+	sf::Texture& GetSurtaxLogoTexture(){ return SurtaxLogo; }
+	sf::Texture& GetGoToJailCardGraphicsTexture(){ return GoToJailCardGraphics; }
 	std::vector<sf::Texture>& GetMiniCard()	{ return MiniCard; }
 
 	sf::Font& GetPalabFont(){ return PalabFont; }
@@ -145,19 +151,25 @@ public:
 			StartGame = false;
 
 		// Loading Card Texture
-		if (!CardTexure.loadFromFile("graphics/card.png"))
+		if (!CardTexure.loadFromFile("graphics/Cards/card.png"))
 			StartGame = false;
-		if (!RedCardTexure.loadFromFile("graphics/RedCard.png"))
+		if (!RedCardTexure.loadFromFile("graphics/Cards/RedCard.png"))
 			StartGame = false;
-		if (!TrainLogo.loadFromFile("graphics/TrainLogo.png"))
+		if (!TrainLogo.loadFromFile("graphics/Cards/TrainLogo.png"))
 			StartGame = false;
-		if (!PowerStationLogo.loadFromFile("graphics/PowerStationLogo.png"))
+		if (!PowerStationLogo.loadFromFile("graphics/Cards/PowerStationLogo.png"))
 			StartGame = false;
-		if (!WaterSupplyLogo.loadFromFile("graphics/WaterSupplyLogo.png"))
+		if (!WaterSupplyLogo.loadFromFile("graphics/Cards/WaterSupplyLogo.png"))
 			StartGame = false;
-		if (!ChestLogo.loadFromFile("graphics/chest.png"))
+		if (!ChestLogo.loadFromFile("graphics/Cards/chest.png"))
 			StartGame = false;
-		if (!ChanceLogo.loadFromFile("graphics/chance.png"))
+		if (!ChanceLogo.loadFromFile("graphics/Cards/chance.png"))
+			StartGame = false;
+		if (!TaxLogo.loadFromFile("graphics/Cards/TaxLogo.png"))
+			StartGame = false;
+		if (!SurtaxLogo.loadFromFile("graphics/Cards/SurtaxLogo.png"))
+			StartGame = false;
+		if (!GoToJailCardGraphics.loadFromFile("graphics/Cards/GoToJailCardGraphics.png"))
 			StartGame = false;
 
 		//Loading Mini Cards Texture

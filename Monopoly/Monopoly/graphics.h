@@ -1,6 +1,17 @@
 #pragma once
 #include <SFML\Graphics.hpp>
 #include <vector>
+class MissingImageFileError : public std::runtime_error
+{
+public:
+	MissingImageFileError() : std::runtime_error("Monopoly::ERROR!\n\nBrak plików graficznych!\nZainstaluj program ponownie.") {}
+};
+class MissingFontFileError : public std::runtime_error
+{
+public:
+	MissingFontFileError() : std::runtime_error("Monopoly::ERROR!\n\nBrak czcionki!\nZainstaluj program ponownie.") {}
+};
+
 class Graphics
 {
 	sf::Texture bg_menu, bg_trade, game_board;
@@ -25,11 +36,7 @@ class Graphics
 	sf::Font MenuFont;
 	sf::Font CardFont;
 
-	bool StartGame = true;
-
 public:
-	bool StartingGame(){ return StartGame; }
-
 	sf::Texture& bg_menuTexture(){ return bg_menu; }
 	sf::Texture& bg_tradeTexture(){ return bg_trade; }
 	sf::Texture& game_boardTexture(){ return game_board; }
@@ -71,43 +78,44 @@ public:
 	sf::Font& GetMenuFont(){ return MenuFont; }
 	sf::Font& GetCardFont(){ return CardFont; }
 
-	Graphics()
+	Graphics(){}
+	void init()
 	{
 		// Loading Background Menu
 		if (!bg_menu.loadFromFile("graphics/bg_monopoly_logo.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 
 		// Loading Background Trade
 		if (!bg_trade.loadFromFile("graphics/bg_trade.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 
 		// Loading Monopoly Game Board
 		if (!game_board.loadFromFile("graphics/game_board.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 
 		// Loading Numbers of Players
 		if ((!twoPlayers.loadFromFile("graphics/pawn/two_players.png")) || (!twoPlayersHover.loadFromFile("graphics/pawn/two_players_hover.png")))
-			StartGame = false;
+			throw MissingImageFileError();
 		if ((!threePlayers.loadFromFile("graphics/pawn/three_players.png")) || (!threePlayersHover.loadFromFile("graphics/pawn/three_players_hover.png")))
-			StartGame = false;
+			throw MissingImageFileError();
 		if ((!fourPlayers.loadFromFile("graphics/pawn/four_players.png")) || (!fourPlayersHover.loadFromFile("graphics/pawn/four_players_hover.png")))
-			StartGame = false;
+			throw MissingImageFileError();
 
 		// Loading Frames
 		if (!frame.loadFromFile("graphics/frame.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!frame_active.loadFromFile("graphics/frame_active.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!frame_wrong.loadFromFile("graphics/frame_wrong.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 
 		// Loading Pawns Texture
 		std::vector<sf::Texture> pawn(4);
 		int Size = pawn.size();
 		if ((!pawn[1].loadFromFile("graphics/pawn/yellow.png")) || (!pawn[2].loadFromFile("graphics/pawn/green.png")))
-			StartGame = false;
+			throw MissingImageFileError();
 		if ((!pawn[3].loadFromFile("graphics/pawn/red.png")) || (!pawn[0].loadFromFile("graphics/pawn/blue.png")))
-			StartGame = false;
+			throw MissingImageFileError();
 		for (int i = 0; i < Size; ++i)
 		{
 			pawn[i].setSmooth(true);
@@ -116,9 +124,9 @@ public:
 
 		// Loading Pawn For Game
 		if ((!pawn[1].loadFromFile("graphics/pawn/yellow_pawn.png")) || (!pawn[2].loadFromFile("graphics/pawn/green_pawn.png")))
-			StartGame = false;
+			throw MissingImageFileError();
 		if ((!pawn[3].loadFromFile("graphics/pawn/red_pawn.png")) || (!pawn[0].loadFromFile("graphics/pawn/blue_pawn.png")))
-			StartGame = false;
+			throw MissingImageFileError();
 		for (int i = 0; i < Size; ++i)
 		{
 			pawn[i].setSmooth(true);
@@ -129,11 +137,11 @@ public:
 		std::vector<sf::Texture> dice(6);
 		Size = dice.size();
 		if ((!dice[0].loadFromFile("graphics/dice/meshNumber_1.png")) || (!dice[1].loadFromFile("graphics/dice/meshNumber_2.png")))
-			StartGame = false;
+			throw MissingImageFileError();
 		if ((!dice[2].loadFromFile("graphics/dice/meshNumber_3.png")) || (!dice[3].loadFromFile("graphics/dice/meshNumber_4.png")))
-			StartGame = false;
+			throw MissingImageFileError();
 		if ((!dice[4].loadFromFile("graphics/dice/meshNumber_5.png")) || (!dice[5].loadFromFile("graphics/dice/meshNumber_6.png")))
-			StartGame = false;
+			throw MissingImageFileError();
 		for (int i = 0; i < Size; ++i)
 		{
 			dice[i].setSmooth(true);
@@ -142,61 +150,61 @@ public:
 
 		// Loading Buttons Texture
 		if (!button_enable.loadFromFile("graphics/button_enable.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!button_disable.loadFromFile("graphics/button_disable.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!button_enable_short.loadFromFile("graphics/button_enable_short.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!button_disable_short.loadFromFile("graphics/button_disable_short.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 
 		// Loading Card Texture
 		if (!CardTexure.loadFromFile("graphics/Cards/card.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!RedCardTexure.loadFromFile("graphics/Cards/RedCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!TrainLogo.loadFromFile("graphics/Cards/TrainLogo.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!PowerStationLogo.loadFromFile("graphics/Cards/PowerStationLogo.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!WaterSupplyLogo.loadFromFile("graphics/Cards/WaterSupplyLogo.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!ChestLogo.loadFromFile("graphics/Cards/chest.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!ChanceLogo.loadFromFile("graphics/Cards/chance.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!TaxLogo.loadFromFile("graphics/Cards/TaxLogo.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!SurtaxLogo.loadFromFile("graphics/Cards/SurtaxLogo.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!GoToJailCardGraphics.loadFromFile("graphics/Cards/GoToJailCardGraphics.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 
 		//Loading Mini Cards Texture
 		std::vector<sf::Texture> MiniCards(11);
 		Size = MiniCards.size();
 		if (!MiniCards[0].loadFromFile("graphics/miniCards/jailCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!MiniCards[1].loadFromFile("graphics/miniCards/BlackMiniCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!MiniCards[2].loadFromFile("graphics/miniCards/SpecialMiniCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!MiniCards[3].loadFromFile("graphics/miniCards/PurpleMiniCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!MiniCards[4].loadFromFile("graphics/miniCards/LightBlueMiniCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!MiniCards[5].loadFromFile("graphics/miniCards/PinkMiniCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!MiniCards[6].loadFromFile("graphics/miniCards/OrangeMiniCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!MiniCards[7].loadFromFile("graphics/miniCards/RedMiniCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!MiniCards[8].loadFromFile("graphics/miniCards/YellowMiniCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!MiniCards[9].loadFromFile("graphics/miniCards/GreenMiniCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 		if (!MiniCards[10].loadFromFile("graphics/miniCards/BlueMiniCard.png"))
-			StartGame = false;
+			throw MissingImageFileError();
 
 		for (int i = 0; i < Size; ++i)
 		{
@@ -206,10 +214,10 @@ public:
 
 		// Loading Fonts
 		if (!PalabFont.loadFromFile("font/palab.ttf"))
-			StartGame = false;
+			throw MissingFontFileError();
 		if (!MenuFont.loadFromFile("font/kawoszeh.ttf"))
-			StartGame = false;
+			throw MissingFontFileError();
 		if (!CardFont.loadFromFile("font/Maritime_Tropical_Neue.ttf"))
-			StartGame = false;
+			throw MissingFontFileError();
 	}
 };

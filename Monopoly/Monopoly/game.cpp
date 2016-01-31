@@ -18,7 +18,7 @@
 using namespace std;
 using namespace sf;
 
-Game::Game() : window(VideoMode(1100, 700, 32), "", Style::None), graphics(Graphics())
+Game::Game() : window(VideoMode(1100, 700, 32), "", Style::None)//, graphics(Graphics())
 {
 	window.setPosition(Vector2i(100, 10));
 	window.setKeyRepeatEnabled(true);
@@ -26,14 +26,22 @@ Game::Game() : window(VideoMode(1100, 700, 32), "", Style::None), graphics(Graph
 	window.setVerticalSyncEnabled(true);
 	window.setFramerateLimit(60);
 
-	if (graphics.StartingGame())
-		state = GameState::MODE_MENU;
-	else
+	state = GameState::MODE_MENU;
+
+	try
 	{
-		MessageBox(0, "Monopoly::ERROR!\n\nBrak plików!\nZainstaluj program ponownie.", "Monopoly::ERROR", MB_OK);
+		graphics.init();
+	}
+	catch (const MissingImageFileError& imgError)
+	{
+		MessageBox(0, imgError.what(), "Monopoly::ERROR", MB_OK);
 		state = GameState::END;
 	}
-		
+	catch (const MissingFontFileError& fontError)
+	{
+		MessageBox(0, fontError.what(), "Monopoly::ERROR", MB_OK);
+		state = GameState::END;
+	}	
 }
 Game::~Game()
 {

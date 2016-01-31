@@ -13,6 +13,7 @@ public:
 		description(description),
 		wasUsed(wasUsed)
 	{}
+	virtual ~DrawCard(){}
 	virtual void DrawCardAction(Player& activePlayer) = 0;
 
 	sf::String& GetDescrition(){ return description; }

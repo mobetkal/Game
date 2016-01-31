@@ -117,8 +117,8 @@ public:
 
 		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", this->CardFont, 12), sf::Color::Black, 478, true));
 
-		graphics.emplace_back(this->RedCardTexture, (700 - 450) / 2, (700 - 290) / 2);
-		graphics.emplace_back(this->SpecialTexture, (700 - 450) / 2, (700 - 290) / 2);
+		graphics.emplace_back(ButtonSprite(this->RedCardTexture, (700 - 450) / 2, (700 - 290) / 2));
+		graphics.emplace_back(ButtonSprite(this->SpecialTexture, (700 - 450) / 2, (700 - 290) / 2));
 	}
 	bool isVisible(){ return visibility; }
 	void SetVisibility(bool status){ visibility = status; }
@@ -218,8 +218,8 @@ public:
 		texts.emplace_back(ButtonText(sf::Text((sf::String)(std::to_string(this->card.Get_mortgage())) + L" zł", CardFont, 15), sf::Color::Black, 485, true, 108.0f));
 		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", CardFont, 12), sf::Color::Black, 559, true));
 
-		graphics.emplace_back(this->CardTexture, (700 - 290) / 2, 125.0f);
-		graphics.emplace_back(this->SpecialTexture, (700 - 220) / 2, 140.0f);
+		graphics.emplace_back(ButtonSprite(this->CardTexture, (700 - 290) / 2, 125.0f));
+		graphics.emplace_back(ButtonSprite(this->SpecialTexture, (700 - 220) / 2, 140.0f));
 	}
 	SpecialCard& GetCard() { return card; }
 	void Action(Player& player) override
@@ -304,8 +304,8 @@ public:
 		texts.emplace_back(ButtonText(sf::Text((sf::String)(std::to_string(this->card.Get_mortgage())) + L" zł", CardFont, 16), sf::Color::Black, 475, true, 105.0f));
 		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", CardFont, 12), sf::Color::Black, 559, true));
 
-		graphics.emplace_back(this->CardTexture, (700 - 290) / 2, 125.0f);
-		graphics.emplace_back(this->Train, (700 - 195) / 2, 150.0f);
+		graphics.emplace_back(ButtonSprite(this->CardTexture, (700 - 290) / 2, 125.0f));
+		graphics.emplace_back(ButtonSprite(this->Train, (700 - 195) / 2, 150.0f));
 	}
 	TrainCard& GetCard() { return card; }
 	void Action(Player& player) override
@@ -404,7 +404,7 @@ public:
 		texts.emplace_back(ButtonText(sf::Text((sf::String)(std::to_string(this->card.Get_mortgage())) + L" zł", CardFont, 15), sf::Color::Black, 480, true, 104.0f));
 		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", CardFont, 12), sf::Color::Black, 559, true));
 
-		graphics.emplace_back(this->CardTexture, (700 - 290) / 2, 125.0f);
+		graphics.emplace_back(ButtonSprite(this->CardTexture, (700 - 290) / 2, 125.0f));
 	}
 	sf::VertexArray& GetColor(){ return Color; }
 	DeedCard& GetCard() { return card; }
@@ -473,8 +473,8 @@ public:
 
 		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", CardFont, 12), sf::Color::Black, 559, true));
 
-		graphics.emplace_back(this->CardTexture, (700 - 290) / 2, 125.0f);
-		graphics.emplace_back(this->SpecialTexture, (700 - 290) / 2, 125.0f);
+		graphics.emplace_back(ButtonSprite(this->CardTexture, (700 - 290) / 2, 125.0f));
+		graphics.emplace_back(ButtonSprite(this->SpecialTexture, (700 - 290) / 2, 125.0f));
 	}
 
 	void DoWork(ButtonSprite* hoverImgButton, Player*& activePlayer, bool& CloseCard, bool& ShownCard, ButtonSprite& nextPlayerButton) override
@@ -535,8 +535,8 @@ public:
 		AddTextCenterFormat(texts, text, CardFont, 19, sf::Color::Black, 448.0f, 25, false);
 		texts.emplace_back(ButtonText(sf::Text(L"  2016 Marcin Obetkał", CardFont, 12), sf::Color::Black, 559, true));
 
-		graphics.emplace_back(this->CardTexture, (700 - 290) / 2, 125.0f);
-		graphics.emplace_back(this->SpecialTexture, (700 - 290) / 2, 110.0f);
+		graphics.emplace_back(ButtonSprite(this->CardTexture, (700 - 290) / 2, 125.0f));
+		graphics.emplace_back(ButtonSprite(this->SpecialTexture, (700 - 290) / 2, 110.0f));
 	}
 	void Action(Player& player) override
 	{

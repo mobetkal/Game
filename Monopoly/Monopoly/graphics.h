@@ -32,6 +32,8 @@ class Graphics
 	sf::Texture SurtaxLogo;
 	sf::Texture GoToJailCardGraphics;
 
+	sf::Texture BankruptFrame;
+
 	sf::Font PalabFont;
 	sf::Font MenuFont;
 	sf::Font CardFont;
@@ -73,6 +75,8 @@ public:
 	sf::Texture& GetSurtaxLogoTexture(){ return SurtaxLogo; }
 	sf::Texture& GetGoToJailCardGraphicsTexture(){ return GoToJailCardGraphics; }
 	std::vector<sf::Texture>& GetMiniCard()	{ return MiniCard; }
+
+	sf::Texture& GetBankcruptTexture(){ return BankruptFrame; }
 
 	sf::Font& GetPalabFont(){ return PalabFont; }
 	sf::Font& GetMenuFont(){ return MenuFont; }
@@ -179,6 +183,10 @@ public:
 			throw MissingImageFileError();
 		if (!GoToJailCardGraphics.loadFromFile("graphics/Cards/GoToJailCardGraphics.png"))
 			throw MissingImageFileError();
+
+		if (!BankruptFrame.loadFromFile("graphics/BankruptFrame.png"))
+			throw MissingImageFileError();
+		
 
 		//Loading Mini Cards Texture
 		std::vector<sf::Texture> MiniCards(11);

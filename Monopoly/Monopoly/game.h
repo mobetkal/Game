@@ -8,7 +8,7 @@
 #include "drawcard.h"
 class Field;
 
-enum class GameState { MODE_MENU, MAIN_MENU, PLAYERS_MENU, SET_NAMES, START_GAME, TRADE, END };
+enum class GameState { MODE_MENU, MAIN_MENU, PLAYERS_MENU, SET_NAMES, START_GAME, TRADE, GAME_OVER, END };
 #include "buttonsprite.h"
 #include "buttontext.h"
 #include "DetectMemoryLeaks.h"
@@ -48,6 +48,7 @@ public:
 	void PlayersMenu();
 	void SetNames();
 	void StartGame();
+	void GameOver();
 
 	//Creating Methods
 	void CreatePlayersAndPawns();

@@ -18,7 +18,7 @@
 using namespace std;
 using namespace sf;
 
-Game::Game() : window(VideoMode(1100, 700, 32), "", Style::None)//, graphics(Graphics())
+Game::Game() : window(VideoMode(1100, 700, 32), "", Style::None)
 {
 	window.setPosition(Vector2i(100, 10));
 	window.setKeyRepeatEnabled(true);
@@ -89,6 +89,11 @@ void Game::Rungame()
 		case GameState::START_GAME:
 		{
 				  StartGame();
+				  break;
+		}
+		case GameState::GAME_OVER:
+		{
+				  GameOver();
 				  break;
 		}
 		default:
@@ -357,6 +362,7 @@ void Game::StartGame()
 	bool ShownCard = false;
 	bool CloseCard = false;
 	bool LetDrawStatusCard = false;
+	bool ShowInformation = false;
 
 	pair<ButtonSprite, ButtonText> rollDiceButton = make_pair(ButtonSprite(graphics.GetButtonEnable(), graphics.GetButtonDisable(), 936.0f, 55.0f), ButtonText(L"Rzuć kostkami!", graphics.GetMenuFont(), 17, 953.0f, 63.0f, false));
 	pair<ButtonSprite, ButtonText> nextPlayerButton = make_pair(ButtonSprite(graphics.GetButtonEnable(), graphics.GetButtonDisable(), 936.0f, 540.0f), ButtonText(L"Następny gracz!", graphics.GetMenuFont(), 17, 945.0f, 548.0f, false));
@@ -365,6 +371,8 @@ void Game::StartGame()
 	pair<ButtonSprite, ButtonText> buildButton = make_pair(ButtonSprite(graphics.GetButtonEnableShort(), graphics.GetButtonDisableShort(), 225.0f, 515.0f, false), ButtonText(L"ZBUDUJ", graphics.GetCardFont(), 19, 252.0f, 522.0f, false));
 	pair<ButtonSprite, ButtonText> depositButton = make_pair(ButtonSprite(graphics.GetButtonEnableShort(), graphics.GetButtonDisableShort(), 355.0f, 515.0f, false), ButtonText(L"HIPOTEKA", graphics.GetCardFont(), 19, 375.0f, 522.0f, false));
 	pair<ButtonSprite, ButtonText> tradeButton = make_pair(ButtonSprite(graphics.GetButtonEnable(), graphics.GetButtonDisable(), 720.0f, 540.0f, false), ButtonText(L"Oferta Wymiany", graphics.GetMenuFont(), 17, 730.0f, 548.0f, false));
+	pair<ButtonSprite, ButtonText> bankrupt = make_pair(ButtonSprite(graphics.GetBankcruptTexture(), 300, 160), ButtonText(L"ZBANKRUTOWAŁEŚ!", graphics.GetMenuFont(), 40, 200));
+	bankrupt.second.GetText().setStyle(Text::Bold);
 
 	ButtonSprite* hoverImgButton = nullptr;
 	MiniCard* hoverStatusCard = nullptr;
@@ -372,12 +380,15 @@ void Game::StartGame()
 
 	Player* activePlayer = nullptr;
 	Field* FindedCard = nullptr;
-
+	player[0].AddMoney(-2000);
 	while (state == GameState::START_GAME)
 	{
 		Vector2f mouse(Mouse::getPosition(window));
 		activePlayer = CheckActivePlayer();
 		hoverStatusCard = CheckHoverStatusCard();
+
+		if (activePlayer->IsWinner())
+			state = GameState::GAME_OVER;
 
 		ActivateTradeButton(tradeButton.first, activePlayer);
 
@@ -410,8 +421,27 @@ void Game::StartGame()
 				state = GameState::END;
 				break;
 			}
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && activePlayer && activePlayer->IsBankrupt())
+			{
+				if (hoverImgButton != &bankrupt.first)
+				{
+					ShowInformation = false;
+					Player* target = activePlayer;
+					GoToNextPlayer(activePlayer, textButtons[1]);
+					activePlayer = nullptr;
+					vector<Player> tmpPlayers;
+					for (auto& finded : player)
+					{
+						if (&finded != target)
+							tmpPlayers.emplace_back(move(finded));
+					}
+					player.clear();
+					player = move(tmpPlayers);
+					
+				}
+			}
 
-			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left)
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && activePlayer && !activePlayer->IsBankrupt())
 			{
 				//if (hoverImgButton == &tradeButton.first && tradeButton.first.IsActive())
 					//CreateTrade(activePlayer, activePlayer+1);
@@ -480,7 +510,7 @@ void Game::StartGame()
 			CloseCard = false;
 			activePlayer->SetActiveField(false);
 		}
-		if (activePlayer->ExistJailCard())
+		if (activePlayer && activePlayer->ExistJailCard())
 		{
 			window.draw(activePlayer->GetJailCard());
 			window.draw(activePlayer->GetJailCardTitle());
@@ -492,8 +522,54 @@ void Game::StartGame()
 			DrawButtonOnWindow(window, depositButton);
 		}
 		DrawButtonOnWindow(window, tradeButton);
+		if (activePlayer && activePlayer->IsBankrupt())
+		{
+			DrawButtonOnWindow(window, bankrupt);
+			ShowInformation = true;
+		}
 		window.display();
 	}
+	textButtons.clear();
+	imgButtons.clear();
+}
+void Game::GameOver()
+{
+	bg.setTexture(graphics.bg_menuTexture());
+	textButtons.emplace_back(L"GRATULACJE!", graphics.GetMenuFont(), 55, 300.0f, false);
+	textButtons.emplace_back(L"Gracz " + player[0].GetString() + L" wygrał grę!", graphics.GetMenuFont(), 50, 420.0f, false);
+	textButtons.emplace_back(L"Koniec gry...", graphics.GetMenuFont(), 45, 800.0f, 630.0f, GameState::END);
+	textButtons.emplace_back(L"MARCIN OBETKAŁ©", graphics.GetPalabFont(), 13, 789.0f, 283.0f, false);
+
+	ButtonText* hoverButtonText = nullptr;
+
+	while (state == GameState::GAME_OVER)
+	{
+		Vector2f mouse(Mouse::getPosition(window));
+		hoverButtonText = CheckHoverTextButtonInMenu(textButtons);
+
+		Event event;
+		while (window.pollEvent(event))
+		{
+			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
+			{
+				state = GameState::END;
+				break;
+			}
+
+			if (event.type == Event::MouseButtonReleased && event.key.code == Mouse::Left && hoverButtonText)
+			{
+				state = hoverButtonText->GetState();
+				break;
+			}
+		}
+		window.clear();
+		window.draw(bg);
+		for (auto& button : textButtons)
+			window.draw(button.GetText());
+		window.display();
+
+	}
+	textButtons.clear();
 }
 
 //Creating Methods
@@ -773,10 +849,15 @@ MiniCard* Game::CheckHoverStatusCard()
 }
 Player* Game::CheckActivePlayer()
 {
+	if (player.size() == 1)
+	{
+		player[0].WinnerPlayer();
+		return &player[0];
+	}
 	for (auto& active : player)
 	{
 		active.GetMoneyStatus().setString(L"Stan konta: " + to_string(active.AccoundStatus()));
-		if (active.IsActive())
+		if (active.IsActive() || active.IsWinner())
 		{
 			textButtons[0].GetText().setString(active.GetString());
 			textButtons[2].GetText().setString(to_string(active.AccoundStatus()) + L" zł");
@@ -925,6 +1006,11 @@ void Game::GoToNextPlayer(Player* activePlayer, ButtonText& button)
 {
 	activePlayer->SetActive(false);
 	button.GetText().setString(L"Brak...");
+	if (player.size() == 1 && activePlayer == &player[0])
+	{
+		activePlayer->WinnerPlayer();
+		return;
+	}	
 	if (activePlayer != &player[GetPlayers() - 1])
 	{
 		(activePlayer + 1)->SetActive(true);
@@ -938,7 +1024,6 @@ void Game::GoToNextPlayer(Player* activePlayer, ButtonText& button)
 	for (auto& active : player)
 	if (active.IsActive() && active.IsBlocked())
 		button.GetText().setString(L"Jesteś zablokowany, rzuć kostkami!\nDwa dublety wypuszczą Cię z więzienia!");
-
 }
 bool Game::RollDiceAfterThrowingDoublet(Player* activePlayer, Dice& firstDice, Dice& secondDice, ButtonText& button, bool ShownCard)
 {

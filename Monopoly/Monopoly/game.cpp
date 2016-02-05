@@ -4,7 +4,6 @@
 #include <fstream>
 #include <Windows.h>
 #include <vector>
-#include <list>
 #include "game.h"
 #include "buttonsprite.h"
 #include "buttontext.h"
@@ -18,7 +17,7 @@
 using namespace std;
 using namespace sf;
 
-Game::Game() : window(VideoMode(1100, 700, 32), "", Style::None)
+Game::Game() : window(VideoMode(1100, 700, 32), "", Style::None), game_mode(false)
 {
 	window.setPosition(Vector2i(100, 10));
 	window.setKeyRepeatEnabled(true);
@@ -26,7 +25,7 @@ Game::Game() : window(VideoMode(1100, 700, 32), "", Style::None)
 	window.setVerticalSyncEnabled(true);
 	window.setFramerateLimit(60);
 
-	state = GameState::MODE_MENU;
+	state = GameState::MAIN_MENU;
 
 	try
 	{
@@ -150,7 +149,7 @@ void Game::MainMenu()
 	bg.setTexture(graphics.bg_menuTexture());
 
 	if (!GetGameMode())
-		textButtons.emplace_back(L"Kontynuuj grę", graphics.GetMenuFont(), 45, 350.0f, GameState::END); // Dorobić CONTINUE
+		textButtons.emplace_back(L"Kontynuuj grę", graphics.GetMenuFont(), 45, 350.0f, GameState::END, false); // Niedostępna
 	textButtons.emplace_back(L"Nowa gra", graphics.GetMenuFont(), 45, 410.0f, GameState::PLAYERS_MENU);
 	textButtons.emplace_back(L"Powrót", graphics.GetMenuFont(), 45, 470.0f, GameState::MODE_MENU);
 	textButtons.emplace_back(L"Wyjdź z gry", graphics.GetMenuFont(), 45, 530.0f, GameState::END);
@@ -380,7 +379,7 @@ void Game::StartGame()
 
 	Player* activePlayer = nullptr;
 	Field* FindedCard = nullptr;
-	player[0].AddMoney(-2000);
+	
 	while (state == GameState::START_GAME)
 	{
 		Vector2f mouse(Mouse::getPosition(window));
